@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStore } from '../../src/store/useStore';
 import { FuelTrackTheme } from '../../src/store/theme';
 import { useTheme } from '../../src/hooks/useColorScheme';
-import { exportToCSV } from '../../src/utils/export';
+import { exportToCSV, exportToPDF } from '../../src/utils/export';
 
 export default function SettingsScreen() {
   const theme = useTheme();
@@ -21,10 +21,19 @@ export default function SettingsScreen() {
   const totalVehicles = vehicles.length;
   const totalRefills = refills.length;
 
-  const handleExport = async () => {
+  const vehicleRefills = activeVehicle
+    ? refills.filter((r) => r.vehicleId === activeVehicle.id)
+    : [];
+
+  const handleExportCSV = async () => {
     if (activeVehicle) {
-      const vehicleRefills = refills.filter((r) => r.vehicleId === activeVehicle.id);
       await exportToCSV(activeVehicle, vehicleRefills);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (activeVehicle) {
+      await exportToPDF(activeVehicle, vehicleRefills);
     }
   };
 
@@ -106,7 +115,8 @@ export default function SettingsScreen() {
 
         <View style={[styles.section, { backgroundColor: colors.card }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Actions</Text>
-          <SettingRow label="Export to CSV" value="Share refill data" onPress={handleExport} />
+          <SettingRow label="Export to CSV" value="Share refill data" onPress={handleExportCSV} />
+          <SettingRow label="Export to PDF" value="Share PDF report" onPress={handleExportPDF} />
           <SettingRow label="Load Sample Data" value="Demo vehicles & refills" onPress={handleLoadSample} />
           <SettingRow label="Reset All Data" value="Delete everything" onPress={handleReset} color={colors.danger} />
         </View>
