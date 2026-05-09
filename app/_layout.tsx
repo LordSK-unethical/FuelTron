@@ -13,7 +13,7 @@ function LoadingScreen() {
   return (
     <View style={[styles.loading, { backgroundColor: colors.bg }]}>
       <Text style={[styles.loadingIcon]}>⛽</Text>
-      <Text style={[styles.loadingTitle, { color: colors.text }]}>FuelTrack</Text>
+      <Text style={[styles.loadingTitle, { color: colors.text }]}>FuelTron</Text>
       <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 12 }} />
     </View>
   );

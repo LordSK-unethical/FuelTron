@@ -55,7 +55,7 @@ export default function DashboardScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
       <View style={[styles.header, { paddingHorizontal: 16, paddingTop: 8 }]}>
-        <Text style={[styles.greeting, { color: colors.textSecondary }]}>FuelTrack</Text>
+        <Text style={[styles.greeting, { color: colors.textSecondary }]}>FuelTron</Text>
         <Text style={[styles.title, { color: colors.text }]}>{vehicleName}</Text>
       </View>
 

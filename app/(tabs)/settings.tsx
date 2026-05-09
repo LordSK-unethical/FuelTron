@@ -113,7 +113,7 @@ export default function SettingsScreen() {
 
         <View style={[styles.section, { backgroundColor: colors.card }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
-          <SettingRow label="App" value="FuelTrack v1.0.0" />
+          <SettingRow label="App" value="FuelTron v1.0.0" />
           <SettingRow label="Made with" value="React Native + Expo" />
         </View>
       </ScrollView>

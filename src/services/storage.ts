@@ -12,7 +12,7 @@ let AsyncStorageModule: any = null;
 try {
   AsyncStorageModule = require('@react-native-async-storage/async-storage').default;
 } catch {
-  console.warn('[FuelTrack] AsyncStorage not available, using in-memory storage');
+  console.warn('[FuelTron] AsyncStorage not available, using in-memory storage');
 }
 
 const memStore = new Map<string, string>();

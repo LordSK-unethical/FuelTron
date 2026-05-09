@@ -12,7 +12,7 @@ export default function ModalScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>FuelTrack</Text>
+        <Text style={[styles.title, { color: colors.text }]}>FuelTron</Text>
         <Pressable onPress={() => router.back()}>
           <Text style={[styles.closeText, { color: colors.primary }]}>Close</Text>
         </Pressable>

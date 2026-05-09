@@ -4,7 +4,6 @@ import { useStore } from '../../src/store/useStore';
 import { FuelTrackTheme } from '../../src/store/theme';
 import { useTheme } from '../../src/hooks/useColorScheme';
 import { EmptyState } from '../../src/components/EmptyState';
-import { StatCard } from '../../src/components/StatCard';
 import { KMPLChart } from '../../src/charts/KMPLChart';
 import { FuelCostChart } from '../../src/charts/FuelCostChart';
 import { DistanceChart } from '../../src/charts/DistanceChart';
@@ -65,55 +64,75 @@ export default function AnalyticsScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.statsRow}>
-          <View style={{ flex: 1, marginRight: 6 }}>
-            <StatCard title="Avg KMPL" value={avgKmpl.toFixed(1)} icon="📊" color={colors.primary} theme={theme} />
-          </View>
-          <View style={{ flex: 1, marginLeft: 6 }}>
-            <StatCard title="Total Fuel" value={`${totalFuel.toFixed(1)}L`} icon="⛽" color="#FF8C00" theme={theme} />
-          </View>
-        </View>
-        <View style={styles.statsRow}>
-          <View style={{ flex: 1, marginRight: 6 }}>
-            <StatCard title="Total Distance" value={`${totalDistance.toFixed(0)} km`} icon="📍" color={colors.success} theme={theme} />
-          </View>
-          <View style={{ flex: 1, marginLeft: 6 }}>
-            <StatCard title="Total Cost" value={`₹${totalCost.toFixed(2)}`} icon="💰" color={colors.primary} theme={theme} />
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Fuel Overview</Text>
+          <View style={styles.statGrid}>
+            <View style={styles.statCell}>
+              <Text style={styles.statIcon}>📊</Text>
+              <Text style={[styles.statValue, { color: colors.primary }]}>{avgKmpl.toFixed(1)}</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Avg KMPL</Text>
+            </View>
+            <View style={styles.statCell}>
+              <Text style={styles.statIcon}>⛽</Text>
+              <Text style={[styles.statValue, { color: '#FF8C00' }]}>{totalFuel.toFixed(1)}L</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Fuel</Text>
+            </View>
+            <View style={styles.statCell}>
+              <Text style={styles.statIcon}>📍</Text>
+              <Text style={[styles.statValue, { color: colors.success }]}>{totalDistance.toFixed(0)} km</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Distance</Text>
+            </View>
+            <View style={styles.statCell}>
+              <Text style={styles.statIcon}>💰</Text>
+              <Text style={[styles.statValue, { color: colors.primary }]}>₹{totalCost.toFixed(2)}</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Cost</Text>
+            </View>
           </View>
         </View>
 
         {rideStats && rideStats.totalRides > 0 && (
-          <>
-            <View style={styles.statsRow}>
-              <View style={{ flex: 1, marginRight: 6 }}>
-                <StatCard title="Total Rides" value={String(rideStats.totalRides)} icon="🛣️" color={colors.primary} theme={theme} />
+          <View style={[styles.sectionCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Ride Overview</Text>
+            <View style={styles.statGrid}>
+              <View style={styles.statCell}>
+                <Text style={styles.statIcon}>🛣️</Text>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{rideStats.totalRides}</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Rides</Text>
               </View>
-              <View style={{ flex: 1, marginLeft: 6 }}>
-                <StatCard title="Avg Ride" value={`${rideStats.avgRideDistance} km`} icon="📏" color={colors.success} theme={theme} />
+              <View style={styles.statCell}>
+                <Text style={styles.statIcon}>📏</Text>
+                <Text style={[styles.statValue, { color: colors.success }]}>{rideStats.avgRideDistance} km</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Avg Ride</Text>
+              </View>
+              <View style={styles.statCell}>
+                <Text style={styles.statIcon}>📅</Text>
+                <Text style={[styles.statValue, { color: colors.warning }]}>{rideStats.weekDistance} km</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Week Distance</Text>
+              </View>
+              <View style={styles.statCell}>
+                <Text style={styles.statIcon}>📆</Text>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{rideStats.monthDistance} km</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Month Distance</Text>
+              </View>
+              <View style={styles.statCell}>
+                <Text style={styles.statIcon}>📊</Text>
+                <Text style={[styles.statValue, { color: '#FF8C00' }]}>{rideStats.avgDailyUsage} km</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Avg Daily</Text>
+              </View>
+              <View style={styles.statCell}>
+                <Text style={styles.statIcon}>⛽</Text>
+                <Text style={[styles.statValue, { color: colors.danger }]}>{rideStats.fuelConsumedToday} L</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Today's Fuel</Text>
               </View>
             </View>
-            <View style={styles.statsRow}>
-              <View style={{ flex: 1, marginRight: 6 }}>
-                <StatCard title="Week Distance" value={`${rideStats.weekDistance} km`} icon="📅" color={colors.warning} theme={theme} />
-              </View>
-              <View style={{ flex: 1, marginLeft: 6 }}>
-                <StatCard title="Month Distance" value={`${rideStats.monthDistance} km`} icon="📆" color={colors.primary} theme={theme} />
-              </View>
-            </View>
-            <View style={styles.statsRow}>
-              <View style={{ flex: 1, marginRight: 6 }}>
-                <StatCard title="Avg Daily" value={`${rideStats.avgDailyUsage} km`} icon="📊" color="#FF8C00" theme={theme} />
-              </View>
-              <View style={{ flex: 1, marginLeft: 6 }}>
-                <StatCard title="Today's Fuel" value={`${rideStats.fuelConsumedToday} L`} icon="⛽" color={colors.danger} theme={theme} />
-              </View>
-            </View>
-          </>
+          </View>
         )}
 
-        <KMPLChart data={mileageData} theme={theme} />
-        <FuelCostChart data={monthlyExpenses} theme={theme} />
-        <DistanceChart data={mileageData} theme={theme} />
+        <View style={styles.chartsSection}>
+          <KMPLChart data={mileageData} theme={theme} />
+          <FuelCostChart data={monthlyExpenses} theme={theme} />
+          <DistanceChart data={mileageData} theme={theme} />
+        </View>
       </ScrollView>
     </View>
   );
@@ -124,5 +143,23 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800' },
   subtitle: { fontSize: 13, marginTop: 2 },
   scrollView: { flex: 1 },
-  statsRow: { flexDirection: 'row', marginBottom: 4 },
+  sectionCard: {
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 14,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  sectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 14 },
+  statGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  statCell: { width: '50%', marginBottom: 14 },
+  statIcon: { fontSize: 18, marginBottom: 4 },
+  statValue: { fontSize: 17, fontWeight: '800' },
+  statLabel: { fontSize: 11, fontWeight: '500', marginTop: 1 },
+  chartsSection: { marginTop: 4 },
 });

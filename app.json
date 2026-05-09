@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "FuelTrack",
-    "slug": "FuelTrack",
+    "name": "FuelTron",
+    "slug": "FuelTron",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "fueltrack",
+    "scheme": "fueltron",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fueltrack.app"
+      "bundleIdentifier": "com.fueltron.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +19,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.fueltrack.app"
+      "package": "com.fueltron.app"
     },
     "web": {
       "output": "static",

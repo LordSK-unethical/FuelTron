@@ -42,7 +42,7 @@ function refillsToCSV(vehicle: Vehicle, refills: Refill[]): string {
     });
 
   return [
-    `FuelTrack Export - ${vehicle.name} (${vehicle.number})`,
+    `FuelTron Export - ${vehicle.name} (${vehicle.number})`,
     `Generated: ${new Date().toLocaleString()}`,
     '',
     headers.join(','),
@@ -52,12 +52,12 @@ function refillsToCSV(vehicle: Vehicle, refills: Refill[]): string {
 
 export async function exportToCSV(vehicle: Vehicle, refills: Refill[]): Promise<void> {
   if (!FileSystem || !Sharing) {
-    console.warn('[FuelTrack] Export modules not available');
+    console.warn('[FuelTron] Export modules not available');
     return;
   }
 
   const csv = refillsToCSV(vehicle, refills);
-  const filename = `FuelTrack_${vehicle.name.replace(/\s+/g, '_')}_${Date.now()}.csv`;
+  const filename = `FuelTron_${vehicle.name.replace(/\s+/g, '_')}_${Date.now()}.csv`;
 
   try {
     const dir = FileSystem.documentDirectory || '';
@@ -73,7 +73,7 @@ export async function exportToCSV(vehicle: Vehicle, refills: Refill[]): Promise<
       });
     }
   } catch (err) {
-    console.warn('[FuelTrack] Export failed:', err);
+    console.warn('[FuelTron] Export failed:', err);
   }
 }
 
@@ -87,7 +87,7 @@ export function generateMonthlyReport(vehicle: Vehicle, refills: Refill[]): stri
   const entriesCount = sorted.length;
 
   return [
-    'FUELTRACK - MONTHLY REPORT',
+    'FUELTRON - MONTHLY REPORT',
     '========================',
     `Vehicle: ${vehicle.name} (${vehicle.number})`,
     `Type: ${vehicle.type} | Fuel: ${vehicle.fuelType}`,
