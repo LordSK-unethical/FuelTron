@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import { Vehicle, Refill, ThemeMode } from '../types';
+import { Vehicle, Refill, ThemeMode, Ride } from '../types';
 import { storage } from '../services/storage';
-import { sampleVehicles, sampleRefills } from '../utils/sampleData';
+import { sampleVehicles, sampleRefills, sampleRides } from '../utils/sampleData';
 
 interface AppState {
   vehicles: Vehicle[];
   refills: Refill[];
+  rides: Ride[];
   activeVehicleId: string | null;
   theme: ThemeMode;
   initialized: boolean;
@@ -19,6 +20,8 @@ interface AppState {
   addRefill: (refill: Refill) => Promise<void>;
   updateRefill: (refill: Refill) => Promise<void>;
   deleteRefill: (id: string) => Promise<void>;
+  addRide: (ride: Ride) => Promise<void>;
+  deleteRide: (id: string) => Promise<void>;
   setTheme: (theme: ThemeMode) => Promise<void>;
   loadSampleData: () => Promise<void>;
   resetAllData: () => Promise<void>;
@@ -27,6 +30,7 @@ interface AppState {
 export const useStore = create<AppState>((set, get) => ({
   vehicles: [],
   refills: [],
+  rides: [],
   activeVehicleId: null,
   theme: 'system',
   initialized: false,
@@ -34,14 +38,16 @@ export const useStore = create<AppState>((set, get) => ({
 
   initialize: async () => {
     try {
-      const [vehicles, refills, settings] = await Promise.all([
+      const [vehicles, refills, rides, settings] = await Promise.all([
         storage.loadVehicles(),
         storage.loadRefills(),
+        storage.loadRides(),
         storage.loadSettings(),
       ]);
       set({
         vehicles,
         refills,
+        rides,
         theme: settings?.theme || 'system',
         activeVehicleId: vehicles.length > 0 ? vehicles[0].id : null,
         initialized: true,
@@ -72,13 +78,16 @@ export const useStore = create<AppState>((set, get) => ({
   deleteVehicle: async (id: string) => {
     const vehicles = get().vehicles.filter((v) => v.id !== id);
     const refills = get().refills.filter((r) => r.vehicleId !== id);
+    const rides = get().rides.filter((r) => r.vehicleId !== id);
     await Promise.all([
       storage.saveVehicles(vehicles),
       storage.saveRefills(refills),
+      storage.saveRides(rides),
     ]);
     set({
       vehicles,
       refills,
+      rides,
       activeVehicleId:
         get().activeVehicleId === id
           ? vehicles.length > 0
@@ -106,6 +115,18 @@ export const useStore = create<AppState>((set, get) => ({
     set({ refills });
   },
 
+  addRide: async (ride: Ride) => {
+    const rides = [...get().rides, ride];
+    await storage.saveRides(rides);
+    set({ rides });
+  },
+
+  deleteRide: async (id: string) => {
+    const rides = get().rides.filter((r) => r.id !== id);
+    await storage.saveRides(rides);
+    set({ rides });
+  },
+
   setTheme: async (theme: ThemeMode) => {
     await storage.saveSettings({ theme });
     set({ theme });
@@ -115,16 +136,18 @@ export const useStore = create<AppState>((set, get) => ({
     await Promise.all([
       storage.saveVehicles(sampleVehicles),
       storage.saveRefills(sampleRefills),
+      storage.saveRides(sampleRides),
     ]);
     set({
       vehicles: sampleVehicles,
       refills: sampleRefills,
+      rides: sampleRides,
       activeVehicleId: sampleVehicles[0].id,
     });
   },
 
   resetAllData: async () => {
     await storage.clearAll();
-    set({ vehicles: [], refills: [], activeVehicleId: null });
+    set({ vehicles: [], refills: [], rides: [], activeVehicleId: null });
   },
 }));

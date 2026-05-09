@@ -59,6 +59,7 @@ export default function RootLayout() {
           name="refill/[id]"
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
         />
+        <Stack.Screen name="log-ride" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />

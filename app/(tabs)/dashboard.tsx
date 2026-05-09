@@ -14,6 +14,7 @@ import {
   getLastRefill,
   predictNextRefill,
   getMonthlyFuelCost,
+  getRideStats,
 } from '../../src/utils/calculations';
 
 export default function DashboardScreen() {
@@ -22,6 +23,7 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const vehicles = useStore((s) => s.vehicles);
   const refills = useStore((s) => s.refills);
+  const rides = useStore((s) => s.rides);
   const activeVehicleId = useStore((s) => s.activeVehicleId);
   const setActiveVehicle = useStore((s) => s.setActiveVehicle);
 
@@ -30,7 +32,8 @@ export default function DashboardScreen() {
   const totalCost = activeVehicle ? getTotalFuelCost(activeVehicle.id, refills) : 0;
   const lastRefill = activeVehicle ? getLastRefill(activeVehicle.id, refills) : null;
   const monthlyCost = activeVehicle ? getMonthlyFuelCost(activeVehicle.id, refills) : 0;
-  const prediction = activeVehicle ? predictNextRefill(activeVehicle, refills) : null;
+  const prediction = activeVehicle ? predictNextRefill(activeVehicle, refills, rides) : null;
+  const rideStats = activeVehicle ? getRideStats(activeVehicle.id, rides, refills) : null;
 
   const vehicleName = activeVehicle?.name || 'No Vehicle';
 
@@ -188,6 +191,30 @@ export default function DashboardScreen() {
           </View>
         )}
 
+        {rideStats && rideStats.totalRides > 0 && (
+          <View style={[styles.lastRefillCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Today's Rides</Text>
+            <View style={styles.lastRefillGrid}>
+              <View style={styles.refillStat}>
+                <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Distance</Text>
+                <Text style={[styles.refillValue, { color: colors.text }]}>{rideStats.todayDistance} km</Text>
+              </View>
+              <View style={styles.refillStat}>
+                <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Fuel Used</Text>
+                <Text style={[styles.refillValue, { color: colors.warning }]}>{rideStats.fuelConsumedToday} L</Text>
+              </View>
+              <View style={styles.refillStat}>
+                <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Week Distance</Text>
+                <Text style={[styles.refillValue, { color: colors.text }]}>{rideStats.weekDistance} km</Text>
+              </View>
+              <View style={styles.refillStat}>
+                <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Avg Daily</Text>
+                <Text style={[styles.refillValue, { color: colors.primary }]}>{rideStats.avgDailyUsage} km</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
         {!activeVehicle && (
           <EmptyState
             icon="🚗"
@@ -198,12 +225,20 @@ export default function DashboardScreen() {
         )}
       </ScrollView>
 
-      <Pressable
-        onPress={() => router.push('/add-refill')}
-        style={[styles.fab, { backgroundColor: colors.primary }]}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </Pressable>
+      <View style={styles.fabRow}>
+        <Pressable
+          onPress={() => router.push('/log-ride')}
+          style={[styles.fabSmall, { backgroundColor: colors.success }]}
+        >
+          <Text style={styles.fabSmallText}>🛣️</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => router.push('/add-refill')}
+          style={[styles.fab, { backgroundColor: colors.primary }]}
+        >
+          <Text style={styles.fabText}>+</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -238,10 +273,28 @@ const styles = StyleSheet.create({
   refillStat: { width: '50%', marginBottom: 12 },
   refillLabel: { fontSize: 11, fontWeight: '500', marginBottom: 2 },
   refillValue: { fontSize: 16, fontWeight: '700' },
-  fab: {
+  fabRow: {
     position: 'absolute',
     bottom: 24,
     right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  fabSmall: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  fabSmallText: { color: '#FFFFFF', fontSize: 20 },
+  fab: {
     width: 56,
     height: 56,
     borderRadius: 28,

@@ -1,6 +1,7 @@
 export type VehicleType = 'Car' | 'Bike' | 'Scooty' | 'Truck';
 export type FuelType = 'Petrol' | 'Diesel' | 'Electric' | 'CNG';
 export type ThemeMode = 'light' | 'dark' | 'system';
+export type RideType = 'City' | 'Highway' | 'Mixed';
 
 export interface Vehicle {
   id: string;
@@ -25,6 +26,19 @@ export interface Refill {
   rangeAdded: number;
 }
 
+export interface Ride {
+  id: string;
+  vehicleId: string;
+  previousOdometer: number;
+  currentOdometer: number;
+  distance: number;
+  fuelUsed: number;
+  remainingRange: number;
+  rideType: RideType;
+  notes: string;
+  createdAt: number;
+}
+
 export interface VehicleFuelState {
   currentFuelLiters: number;
   remainingRange: number;
@@ -43,6 +57,16 @@ export interface MileageData {
   kmpl: number;
   distance: number;
   cost: number;
+}
+
+export interface RideStats {
+  totalRides: number;
+  todayDistance: number;
+  weekDistance: number;
+  monthDistance: number;
+  avgRideDistance: number;
+  fuelConsumedToday: number;
+  avgDailyUsage: number;
 }
 
 export interface MonthlyExpense {

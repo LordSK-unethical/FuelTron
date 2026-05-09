@@ -1,4 +1,4 @@
-import { Refill, Vehicle, MileageData, MonthlyExpense, Prediction, VehicleFuelState } from '../types';
+import { Refill, Vehicle, MileageData, MonthlyExpense, Prediction, VehicleFuelState, Ride, RideStats, RideType } from '../types';
 
 export function getVehicleRefills(vehicleId: string, refills: Refill[]): Refill[] {
   return refills
@@ -11,9 +11,13 @@ export function getLastRefill(vehicleId: string, refills: Refill[]): Refill | nu
   return sorted.length > 0 ? sorted[sorted.length - 1] : null;
 }
 
-export function getLastOdometer(vehicleId: string, refills: Refill[]): number {
-  const last = getLastRefill(vehicleId, refills);
-  return last ? last.odometer : 0;
+export function getLastOdometer(vehicleId: string, refills: Refill[], rides: Ride[] = []): number {
+  const lastRefill = getLastRefill(vehicleId, refills);
+  const refillOdo = lastRefill ? lastRefill.odometer : 0;
+  const ridesOdo = rides
+    .filter((r) => r.vehicleId === vehicleId)
+    .reduce((max, r) => Math.max(max, r.currentOdometer), 0);
+  return Math.max(refillOdo, ridesOdo);
 }
 
 export function calculateKmpl(rangeAdded: number, fuelAdded: number): number {
@@ -26,7 +30,7 @@ export function calculateCostPerKm(totalCost: number, totalDistance: number): nu
   return Math.round((totalCost / totalDistance) * 100) / 100;
 }
 
-export function getVehicleFuelState(vehicle: Vehicle, refills: Refill[]): VehicleFuelState {
+export function getVehicleFuelState(vehicle: Vehicle, refills: Refill[], rides: Ride[] = []): VehicleFuelState {
   const sorted = getVehicleRefills(vehicle.id, refills);
 
   if (sorted.length === 0) {
@@ -60,45 +64,42 @@ export function getVehicleFuelState(vehicle: Vehicle, refills: Refill[]): Vehicl
   }
 
   let totalRangeBudget = 0;
-  let totalDistanceTraveled = 0;
   let prevOdometer = 0;
 
   for (let i = 0; i < sorted.length; i++) {
     const r = sorted[i];
-
-    if (i > 0) {
-      const dist = r.odometer - prevOdometer;
-      if (dist > 0) totalDistanceTraveled += dist;
-    }
-
     if (r.rangeAdded > 0) {
       totalRangeBudget += r.rangeAdded;
     } else if (r.fuelAdded > 0 && currentKmpl > 0) {
       totalRangeBudget += r.fuelAdded * currentKmpl;
     }
-
     prevOdometer = r.odometer;
   }
 
-  const remainingRange = Math.max(0, totalRangeBudget - totalDistanceTraveled);
+  const totalRideDistance = rides
+    .filter((r) => r.vehicleId === vehicle.id)
+    .reduce((sum, r) => sum + r.distance, 0);
+
+  const remainingRange = Math.max(0, totalRangeBudget - totalRideDistance);
   const currentFuelLiters = currentKmpl > 0
     ? Math.round((remainingRange / currentKmpl) * 10) / 10
     : 0;
 
-  const latestOdometer = sorted[sorted.length - 1].odometer;
+  const latestOdometer = getLastOdometer(vehicle.id, refills, rides);
   const fuelEndOdometer = latestOdometer + remainingRange;
   const fuelPercent = vehicle.fuelTankCapacity > 0
     ? Math.min(100, Math.round((currentFuelLiters / vehicle.fuelTankCapacity) * 100))
     : 0;
   const totalFuelConsumed = sorted.reduce((sum, r) => sum + r.fuelAdded, 0);
   const totalFuelCost = sorted.reduce((sum, r) => sum + r.fuelCost, 0);
+  const totalDistanceTraveled = Math.round(totalRideDistance);
 
   return {
     currentFuelLiters,
     remainingRange: Math.round(remainingRange),
     currentKmpl: Math.round(currentKmpl * 100) / 100,
     fuelEndOdometer: Math.round(fuelEndOdometer),
-    totalDistanceTraveled: Math.round(totalDistanceTraveled),
+    totalDistanceTraveled,
     totalFuelCost: Math.round(totalFuelCost * 100) / 100,
     totalFuelConsumed: Math.round(totalFuelConsumed * 100) / 100,
     fuelPercent,
@@ -173,25 +174,16 @@ export function getEstimatedKmpl(vehicle: Vehicle, refills: Refill[]): number {
   return 15;
 }
 
-export function getTotalDistance(vehicleId: string, refills: Refill[]): number {
-  return getVehicleFuelState(
-    { id: vehicleId } as Vehicle,
-    refills
-  ).totalDistanceTraveled;
+export function getTotalDistance(vehicleId: string, refills: Refill[], rides: Ride[] = []): number {
+  return getVehicleFuelState({ id: vehicleId } as Vehicle, refills, rides).totalDistanceTraveled;
 }
 
 export function getTotalFuelConsumed(vehicleId: string, refills: Refill[]): number {
-  return getVehicleFuelState(
-    { id: vehicleId } as Vehicle,
-    refills
-  ).totalFuelConsumed;
+  return getVehicleFuelState({ id: vehicleId } as Vehicle, refills).totalFuelConsumed;
 }
 
 export function getTotalFuelCost(vehicleId: string, refills: Refill[]): number {
-  return getVehicleFuelState(
-    { id: vehicleId } as Vehicle,
-    refills
-  ).totalFuelCost;
+  return getVehicleFuelState({ id: vehicleId } as Vehicle, refills).totalFuelCost;
 }
 
 export function getMonthlyFuelCost(vehicleId: string, refills: Refill[]): number {
@@ -202,8 +194,8 @@ export function getMonthlyFuelCost(vehicleId: string, refills: Refill[]): number
   return current ? current.totalCost : 0;
 }
 
-export function predictNextRefill(vehicle: Vehicle, refills: Refill[]): Prediction {
-  const state = getVehicleFuelState(vehicle, refills);
+export function predictNextRefill(vehicle: Vehicle, refills: Refill[], rides: Ride[] = []): Prediction {
+  const state = getVehicleFuelState(vehicle, refills, rides);
   const avgKmpl = state.currentKmpl > 0 ? state.currentKmpl : getEstimatedKmpl(vehicle, refills);
   const dailyKm = avgKmpl > 0 ? 30 : 0;
   const daysLeft = dailyKm > 0 ? Math.round(state.remainingRange / dailyKm) : 0;
@@ -235,9 +227,9 @@ export function validateRefill(
   if (rangeAdded < 0) return 'Range gained cannot be negative';
   if (rangeAdded === 0) return 'Please enter the approximate range you expect to gain';
 
-  const lastOdometer = getLastOdometer(vehicleId, refills.filter((r) => r.id !== editingId));
-  if (lastOdometer > 0 && odometer < lastOdometer) {
-    return `Odometer cannot be less than last reading (${lastOdometer} km)`;
+  const lastOdo = getLastOdometer(vehicleId, refills.filter((r) => r.id !== editingId));
+  if (lastOdo > 0 && odometer < lastOdo) {
+    return `Odometer cannot be less than last reading (${lastOdo} km)`;
   }
 
   return null;
@@ -258,5 +250,85 @@ export function computeRefillData(
     distanceTraveled,
     kmpl: calculateKmpl(refill.rangeAdded, refill.fuelAdded),
     costPerKm: calculateCostPerKm(refill.fuelCost, distanceTraveled),
+  };
+}
+
+// ===== RIDE FUNCTIONS =====
+
+export function calculateRideDistance(previousOdometer: number, currentOdometer: number): number {
+  return Math.max(0, currentOdometer - previousOdometer);
+}
+
+export function calculateFuelUsed(distance: number, kmpl: number): number {
+  if (kmpl <= 0 || distance <= 0) return 0;
+  return Math.round((distance / kmpl) * 100) / 100;
+}
+
+export function calculateRemainingRangeAfterRide(previousRange: number, rideDistance: number): number {
+  return Math.max(0, Math.round(previousRange - rideDistance));
+}
+
+export function validateRide(
+  currentOdometer: number,
+  vehicleId: string,
+  refills: Refill[],
+  rides: Ride[],
+  editingId?: string
+): string | null {
+  if (currentOdometer <= 0) return 'Odometer reading must be greater than 0';
+
+  const existingRides = rides.filter((r) => r.vehicleId === vehicleId && r.id !== editingId);
+  const duplicates = existingRides.some((r) => r.currentOdometer === currentOdometer);
+  if (duplicates) return 'This odometer reading was already logged';
+
+  const lastOdo = getLastOdometer(vehicleId, refills, existingRides);
+  if (lastOdo > 0 && currentOdometer <= lastOdo) {
+    return `Odometer must be greater than last reading (${lastOdo} km)`;
+  }
+
+  const maxJump = 2000;
+  if (lastOdo > 0 && currentOdometer - lastOdo > maxJump) {
+    return `Unrealistic jump of ${currentOdometer - lastOdo} km (max ${maxJump} km allowed)`;
+  }
+
+  return null;
+}
+
+export function getRideStats(vehicleId: string, rides: Ride[], refills: Refill[]): RideStats {
+  const vehicleRides = rides.filter((r) => r.vehicleId === vehicleId);
+  const now = Date.now();
+  const DAY = 86400000;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStart = today.getTime();
+  const weekStart = todayStart - today.getDay() * DAY;
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).getTime();
+
+  const todayRides = vehicleRides.filter((r) => r.createdAt >= todayStart);
+  const weekRides = vehicleRides.filter((r) => r.createdAt >= weekStart);
+  const monthRides = vehicleRides.filter((r) => r.createdAt >= monthStart);
+
+  const todayDistance = todayRides.reduce((s, r) => s + r.distance, 0);
+  const weekDistance = weekRides.reduce((s, r) => s + r.distance, 0);
+  const monthDistance = monthRides.reduce((s, r) => s + r.distance, 0);
+
+  const fuelConsumedToday = todayRides.reduce((s, r) => s + r.fuelUsed, 0);
+
+  const sinceFirstRide = vehicleRides.length > 0
+    ? Math.max(1, (now - vehicleRides[0].createdAt) / DAY)
+    : 1;
+  const totalDist = vehicleRides.reduce((s, r) => s + r.distance, 0);
+  const avgDailyUsage = Math.round(totalDist / sinceFirstRide);
+
+  return {
+    totalRides: vehicleRides.length,
+    todayDistance: Math.round(todayDistance),
+    weekDistance: Math.round(weekDistance),
+    monthDistance: Math.round(monthDistance),
+    avgRideDistance: vehicleRides.length > 0
+      ? Math.round(totalDist / vehicleRides.length)
+      : 0,
+    fuelConsumedToday: Math.round(fuelConsumedToday * 100) / 100,
+    avgDailyUsage,
   };
 }

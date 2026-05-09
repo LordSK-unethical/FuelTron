@@ -1,4 +1,4 @@
-import { Vehicle, Refill } from '../types';
+import { Vehicle, Refill, Ride } from '../types';
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
@@ -78,4 +78,55 @@ function generateRefills(
 export const sampleRefills: Refill[] = [
   ...generateRefills(sampleVehicles[0].id, 5000, 40, 12, 90, CAR_KMPL),
   ...generateRefills(sampleVehicles[1].id, 2000, 15, 8, 60, BIKE_KMPL),
+];
+
+function generateRides(
+  vehicleId: string,
+  refills: Refill[],
+  kmpl: number,
+  count: number
+): Ride[] {
+  const rides: Ride[] = [];
+  const vehicleRefills = [...refills].sort((a, b) => a.date - b.date);
+
+  for (let i = 0; i < count; i++) {
+    const refillIndex = Math.min(i, vehicleRefills.length - 1);
+    const refill = vehicleRefills[refillIndex];
+    const previousRefill = vehicleRefills[Math.max(0, refillIndex - 1)];
+
+    const previousOdometer = previousRefill
+      ? previousRefill.odometer + Math.floor(Math.random() * 50)
+      : refill.odometer - Math.floor(Math.random() * 200) - 50;
+
+    const rideDist = Math.floor(Math.random() * 60) + 5;
+    const currentOdometer = previousOdometer + rideDist;
+    const fuelUsed = Math.round((rideDist / kmpl) * 100) / 100;
+    const rangeLeft = refill.rangeAdded - rideDist * (i + 1) * 0.3;
+    const remainingRange = Math.max(0, Math.round(rangeLeft));
+    const rideTypes: Array<'City' | 'Highway' | 'Mixed'> = ['City', 'Highway', 'Mixed'];
+    const rideType = rideTypes[Math.floor(Math.random() * rideTypes.length)];
+
+    const dateOffset = Math.floor(Math.random() * 3) + 1;
+    const rideDate = refill.date + dateOffset * 86400000 + Math.floor(Math.random() * 12) * 3600000;
+
+    rides.push({
+      id: generateId(),
+      vehicleId,
+      previousOdometer,
+      currentOdometer,
+      distance: rideDist,
+      fuelUsed,
+      remainingRange,
+      rideType,
+      notes: '',
+      createdAt: rideDate,
+    });
+  }
+
+  return rides.sort((a, b) => a.createdAt - b.createdAt);
+}
+
+export const sampleRides: Ride[] = [
+  ...generateRides(sampleVehicles[0].id, sampleRefills.filter(r => r.vehicleId === sampleVehicles[0].id), CAR_KMPL, 20),
+  ...generateRides(sampleVehicles[1].id, sampleRefills.filter(r => r.vehicleId === sampleVehicles[1].id), BIKE_KMPL, 12),
 ];

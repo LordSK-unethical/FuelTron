@@ -6,6 +6,7 @@ import { useStore } from '../../src/store/useStore';
 import { FuelTrackTheme } from '../../src/store/theme';
 import { useTheme } from '../../src/hooks/useColorScheme';
 import { RefillItem } from '../../src/components/RefillItem';
+import { RideItem } from '../../src/components/RideItem';
 import { EmptyState } from '../../src/components/EmptyState';
 import { getVehicleRefills, computeRefillData } from '../../src/utils/calculations';
 
@@ -15,8 +16,10 @@ export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
   const vehicles = useStore((s) => s.vehicles);
   const refills = useStore((s) => s.refills);
+  const rides = useStore((s) => s.rides);
   const activeVehicleId = useStore((s) => s.activeVehicleId);
   const deleteRefill = useStore((s) => s.deleteRefill);
+  const deleteRide = useStore((s) => s.deleteRide);
 
   const [searchMonth, setSearchMonth] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -118,6 +121,7 @@ export default function HistoryScreen() {
             contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
             showsVerticalScrollIndicator={false}
           >
+            <Text style={[styles.sectionLabel, { color: colors.text }]}>Refills</Text>
             {filteredRefills.map((refill) => {
               const { kmpl, distance } = displayMileage(refill);
               return (
@@ -132,6 +136,24 @@ export default function HistoryScreen() {
                 />
               );
             })}
+
+            {activeVehicle && rides.filter((r) => r.vehicleId === activeVehicle.id).length > 0 && (
+              <>
+                <View style={[styles.sectionDivider, { borderBottomColor: colors.border }]} />
+                <Text style={[styles.sectionLabel, { color: colors.text }]}>Rides</Text>
+                {rides
+                  .filter((r) => r.vehicleId === activeVehicle.id)
+                  .sort((a, b) => b.createdAt - a.createdAt)
+                  .map((ride) => (
+                    <RideItem
+                      key={ride.id}
+                      ride={ride}
+                      onLongPress={() => deleteRide(ride.id)}
+                      theme={theme}
+                    />
+                  ))}
+              </>
+            )}
           </ScrollView>
         </>
       )}
@@ -192,6 +214,8 @@ const styles = StyleSheet.create({
   summaryValue: { fontSize: 18, fontWeight: '800' },
   summaryLabel: { fontSize: 10, fontWeight: '500', marginTop: 2 },
   scrollView: { flex: 1 },
+  sectionLabel: { fontSize: 16, fontWeight: '700', marginBottom: 10, marginTop: 4 },
+  sectionDivider: { borderBottomWidth: 1, marginVertical: 16 },
   fab: {
     position: 'absolute',
     bottom: 24,

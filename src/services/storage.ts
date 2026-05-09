@@ -1,8 +1,9 @@
-import { Vehicle, Refill } from '../types';
+import { Vehicle, Refill, Ride } from '../types';
 
 const KEYS = {
   VEHICLES: '@fueltrack_vehicles',
   REFILLS: '@fueltrack_refills',
+  RIDES: '@fueltrack_rides',
   SETTINGS: '@fueltrack_settings',
 };
 
@@ -54,6 +55,17 @@ export const storage = {
     return data ? JSON.parse(data) : [];
   },
 
+  async saveRides(rides: Ride[]): Promise<void> {
+    const store = getStorage();
+    await store.setItem(KEYS.RIDES, JSON.stringify(rides));
+  },
+
+  async loadRides(): Promise<Ride[]> {
+    const store = getStorage();
+    const data = await store.getItem(KEYS.RIDES);
+    return data ? JSON.parse(data) : [];
+  },
+
   async saveSettings(settings: Record<string, any>): Promise<void> {
     const store = getStorage();
     await store.setItem(KEYS.SETTINGS, JSON.stringify(settings));
@@ -70,18 +82,20 @@ export const storage = {
     await Promise.all([
       store.removeItem(KEYS.VEHICLES),
       store.removeItem(KEYS.REFILLS),
+      store.removeItem(KEYS.RIDES),
       store.removeItem(KEYS.SETTINGS),
     ]);
   },
 
   async exportData(): Promise<string> {
     const store = getStorage();
-    const [vehicles, refills, settings] = await Promise.all([
+    const [vehicles, refills, rides, settings] = await Promise.all([
       store.getItem(KEYS.VEHICLES),
       store.getItem(KEYS.REFILLS),
+      store.getItem(KEYS.RIDES),
       store.getItem(KEYS.SETTINGS),
     ]);
-    return JSON.stringify({ vehicles, refills, settings }, null, 2);
+    return JSON.stringify({ vehicles, refills, rides, settings }, null, 2);
   },
 
   async importData(json: string): Promise<void> {
@@ -89,6 +103,7 @@ export const storage = {
     const data = JSON.parse(json);
     if (data.vehicles) await store.setItem(KEYS.VEHICLES, data.vehicles);
     if (data.refills) await store.setItem(KEYS.REFILLS, data.refills);
+    if (data.rides) await store.setItem(KEYS.RIDES, data.rides);
     if (data.settings) await store.setItem(KEYS.SETTINGS, data.settings);
   },
 };

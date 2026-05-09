@@ -15,6 +15,7 @@ import {
   getTotalDistance,
   getTotalFuelCost,
   getTotalFuelConsumed,
+  getRideStats,
 } from '../../src/utils/calculations';
 
 export default function AnalyticsScreen() {
@@ -23,6 +24,7 @@ export default function AnalyticsScreen() {
   const insets = useSafeAreaInsets();
   const vehicles = useStore((s) => s.vehicles);
   const refills = useStore((s) => s.refills);
+  const rides = useStore((s) => s.rides);
   const activeVehicleId = useStore((s) => s.activeVehicleId);
 
   const activeVehicle = vehicles.find((v) => v.id === activeVehicleId);
@@ -33,6 +35,7 @@ export default function AnalyticsScreen() {
   const totalDistance = activeVehicle ? getTotalDistance(activeVehicle.id, refills) : 0;
   const totalCost = activeVehicle ? getTotalFuelCost(activeVehicle.id, refills) : 0;
   const totalFuel = activeVehicle ? getTotalFuelConsumed(activeVehicle.id, refills) : 0;
+  const rideStats = activeVehicle ? getRideStats(activeVehicle.id, rides, refills) : null;
 
   if (!activeVehicle) {
     return (
@@ -78,6 +81,35 @@ export default function AnalyticsScreen() {
             <StatCard title="Total Cost" value={`₹${totalCost.toFixed(2)}`} icon="💰" color={colors.primary} theme={theme} />
           </View>
         </View>
+
+        {rideStats && rideStats.totalRides > 0 && (
+          <>
+            <View style={styles.statsRow}>
+              <View style={{ flex: 1, marginRight: 6 }}>
+                <StatCard title="Total Rides" value={String(rideStats.totalRides)} icon="🛣️" color={colors.primary} theme={theme} />
+              </View>
+              <View style={{ flex: 1, marginLeft: 6 }}>
+                <StatCard title="Avg Ride" value={`${rideStats.avgRideDistance} km`} icon="📏" color={colors.success} theme={theme} />
+              </View>
+            </View>
+            <View style={styles.statsRow}>
+              <View style={{ flex: 1, marginRight: 6 }}>
+                <StatCard title="Week Distance" value={`${rideStats.weekDistance} km`} icon="📅" color={colors.warning} theme={theme} />
+              </View>
+              <View style={{ flex: 1, marginLeft: 6 }}>
+                <StatCard title="Month Distance" value={`${rideStats.monthDistance} km`} icon="📆" color={colors.primary} theme={theme} />
+              </View>
+            </View>
+            <View style={styles.statsRow}>
+              <View style={{ flex: 1, marginRight: 6 }}>
+                <StatCard title="Avg Daily" value={`${rideStats.avgDailyUsage} km`} icon="📊" color="#FF8C00" theme={theme} />
+              </View>
+              <View style={{ flex: 1, marginLeft: 6 }}>
+                <StatCard title="Today's Fuel" value={`${rideStats.fuelConsumedToday} L`} icon="⛽" color={colors.danger} theme={theme} />
+              </View>
+            </View>
+          </>
+        )}
 
         <KMPLChart data={mileageData} theme={theme} />
         <FuelCostChart data={monthlyExpenses} theme={theme} />
