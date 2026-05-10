@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import Animated from 'react-native-reanimated';
 import { useStore } from '../src/store/useStore';
 import { FuelTrackTheme } from '../src/store/theme';
 import { useTheme } from '../src/hooks/useColorScheme';
+import { FadeInView } from '../src/components/FadeInView';
+import { useEntranceAnimation } from '../src/utils/animations';
 import { Refill } from '../src/types';
 import { getLastOdometer, validateRefill, calculateKmpl } from '../src/utils/calculations';
 
@@ -31,6 +34,8 @@ export default function AddRefillScreen() {
   const [fullTank, setFullTank] = useState(true);
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  const headerAnim = useEntranceAnimation(0, 30);
 
   const computedKmpl =
     parseFloat(rangeAdded) > 0 && parseFloat(fuelAdded) > 0
@@ -68,13 +73,13 @@ export default function AddRefillScreen() {
   if (!activeVehicle) {
     return (
       <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, headerAnim]}>
           <Pressable onPress={() => router.back()}>
             <Text style={[styles.backText, { color: colors.primary }]}>Cancel</Text>
           </Pressable>
           <Text style={[styles.headerTitle, { color: colors.text }]}>No Vehicle Selected</Text>
           <View style={{ width: 50 }} />
-        </View>
+        </Animated.View>
         <View style={styles.centerContent}>
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
             Please select a vehicle from the dashboard first.
@@ -89,7 +94,7 @@ export default function AddRefillScreen() {
       style={[styles.container, { backgroundColor: colors.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <Animated.View style={[styles.header, { paddingTop: insets.top }, headerAnim]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Text style={[styles.backText, { color: colors.primary }]}>Cancel</Text>
         </Pressable>
@@ -104,127 +109,143 @@ export default function AddRefillScreen() {
             Save
           </Text>
         </Pressable>
-      </View>
+      </Animated.View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
-        <View style={[styles.vehicleInfo, { backgroundColor: colors.card }]}>
-          <Text style={[styles.vehicleName, { color: colors.text }]}>{activeVehicle.name}</Text>
-          <Text style={[styles.vehicleDetail, { color: colors.textSecondary }]}>
-            {activeVehicle.number} &middot; {activeVehicle.fuelType} &middot; {activeVehicle.fuelTankCapacity}L tank
-          </Text>
-        </View>
+        <FadeInView index={0}>
+          <View style={[styles.vehicleInfo, { backgroundColor: colors.card }]}>
+            <Text style={[styles.vehicleName, { color: colors.text }]}>{activeVehicle.name}</Text>
+            <Text style={[styles.vehicleDetail, { color: colors.textSecondary }]}>
+              {activeVehicle.number} &middot; {activeVehicle.fuelType} &middot; {activeVehicle.fuelTankCapacity}L tank
+            </Text>
+          </View>
+        </FadeInView>
 
         {error && (
-          <View style={[styles.errorBanner, { backgroundColor: colors.danger + '15', borderColor: colors.danger + '30' }]}>
-            <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
-          </View>
+          <FadeInView index={1}>
+            <View style={[styles.errorBanner, { backgroundColor: colors.danger + '15', borderColor: colors.danger + '30' }]}>
+              <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
+            </View>
+          </FadeInView>
         )}
 
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Odometer Reading (km)</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
-            placeholder="e.g. 15000"
-            placeholderTextColor={colors.textMuted}
-            value={odometer}
-            onChangeText={setOdometer}
-            keyboardType="decimal-pad"
-          />
-          {lastOdometer > 0 && (
-            <Text style={[styles.hint, { color: colors.textMuted }]}>
-              Last reading: {lastOdometer} km
-            </Text>
-          )}
-        </View>
-
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Fuel Added (Liters)</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
-            placeholder="e.g. 35"
-            placeholderTextColor={colors.textMuted}
-            value={fuelAdded}
-            onChangeText={setFuelAdded}
-            keyboardType="decimal-pad"
-          />
-        </View>
-
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Fuel Cost (₹)</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
-            placeholder="e.g. 530.00"
-            placeholderTextColor={colors.textMuted}
-            value={fuelCost}
-            onChangeText={setFuelCost}
-            keyboardType="decimal-pad"
-          />
-        </View>
-
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Approximate Range Gained (KM)</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
-            placeholder="e.g. 250"
-            placeholderTextColor={colors.textMuted}
-            value={rangeAdded}
-            onChangeText={setRangeAdded}
-            keyboardType="decimal-pad"
-          />
-          <Text style={[styles.hint, { color: colors.textMuted }]}>How far do you expect to go on this fuel?</Text>
-          {computedKmpl > 0 && (
-            <View style={[styles.kmplBadge, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
-              <Text style={[styles.kmplBadgeText, { color: colors.primary }]}>
-                ~{computedKmpl.toFixed(1)} KMPL estimated
+        <FadeInView index={1}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Odometer Reading (km)</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
+              placeholder="e.g. 15000"
+              placeholderTextColor={colors.textMuted}
+              value={odometer}
+              onChangeText={setOdometer}
+              keyboardType="decimal-pad"
+            />
+            {lastOdometer > 0 && (
+              <Text style={[styles.hint, { color: colors.textMuted }]}>
+                Last reading: {lastOdometer} km
               </Text>
-            </View>
-          )}
-        </View>
-
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Full Tank?</Text>
-          <View style={styles.toggleRow}>
-            <Pressable
-              onPress={() => setFullTank(true)}
-              style={[
-                styles.toggleOption,
-                {
-                  backgroundColor: fullTank ? colors.primary : colors.bgSecondary,
-                  borderColor: fullTank ? colors.primary : colors.border,
-                },
-              ]}
-            >
-              <Text style={[styles.toggleText, { color: fullTank ? '#FFFFFF' : colors.text }]}>Yes</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setFullTank(false)}
-              style={[
-                styles.toggleOption,
-                {
-                  backgroundColor: !fullTank ? colors.primary : colors.bgSecondary,
-                  borderColor: !fullTank ? colors.primary : colors.border,
-                  marginLeft: 10,
-                },
-              ]}
-            >
-              <Text style={[styles.toggleText, { color: !fullTank ? '#FFFFFF' : colors.text }]}>No</Text>
-            </Pressable>
+            )}
           </View>
-        </View>
+        </FadeInView>
 
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Notes (Optional)</Text>
-          <TextInput
-            style={[styles.textArea, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
-            placeholder="Any notes about this refill..."
-            placeholderTextColor={colors.textMuted}
-            value={notes}
-            onChangeText={setNotes}
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-          />
-        </View>
+        <FadeInView index={2}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Fuel Added (Liters)</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
+              placeholder="e.g. 35"
+              placeholderTextColor={colors.textMuted}
+              value={fuelAdded}
+              onChangeText={setFuelAdded}
+              keyboardType="decimal-pad"
+            />
+          </View>
+        </FadeInView>
+
+        <FadeInView index={3}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Fuel Cost (₹)</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
+              placeholder="e.g. 530.00"
+              placeholderTextColor={colors.textMuted}
+              value={fuelCost}
+              onChangeText={setFuelCost}
+              keyboardType="decimal-pad"
+            />
+          </View>
+        </FadeInView>
+
+        <FadeInView index={4}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Approximate Range Gained (KM)</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
+              placeholder="e.g. 250"
+              placeholderTextColor={colors.textMuted}
+              value={rangeAdded}
+              onChangeText={setRangeAdded}
+              keyboardType="decimal-pad"
+            />
+            <Text style={[styles.hint, { color: colors.textMuted }]}>How far do you expect to go on this fuel?</Text>
+            {computedKmpl > 0 && (
+              <View style={[styles.kmplBadge, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                <Text style={[styles.kmplBadgeText, { color: colors.primary }]}>
+                  ~{computedKmpl.toFixed(1)} KMPL estimated
+                </Text>
+              </View>
+            )}
+          </View>
+        </FadeInView>
+
+        <FadeInView index={5}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Full Tank?</Text>
+            <View style={styles.toggleRow}>
+              <Pressable
+                onPress={() => setFullTank(true)}
+                style={[
+                  styles.toggleOption,
+                  {
+                    backgroundColor: fullTank ? colors.primary : colors.bgSecondary,
+                    borderColor: fullTank ? colors.primary : colors.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.toggleText, { color: fullTank ? '#FFFFFF' : colors.text }]}>Yes</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setFullTank(false)}
+                style={[
+                  styles.toggleOption,
+                  {
+                    backgroundColor: !fullTank ? colors.primary : colors.bgSecondary,
+                    borderColor: !fullTank ? colors.primary : colors.border,
+                    marginLeft: 10,
+                  },
+                ]}
+              >
+                <Text style={[styles.toggleText, { color: !fullTank ? '#FFFFFF' : colors.text }]}>No</Text>
+              </Pressable>
+            </View>
+          </View>
+        </FadeInView>
+
+        <FadeInView index={6}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Notes (Optional)</Text>
+            <TextInput
+              style={[styles.textArea, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
+              placeholder="Any notes about this refill..."
+              placeholderTextColor={colors.textMuted}
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+          </View>
+        </FadeInView>
       </ScrollView>
     </KeyboardAvoidingView>
   );

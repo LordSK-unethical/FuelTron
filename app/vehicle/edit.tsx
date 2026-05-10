@@ -2,9 +2,13 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import Animated from 'react-native-reanimated';
 import { useStore } from '../../src/store/useStore';
 import { FuelTrackTheme } from '../../src/store/theme';
 import { useTheme } from '../../src/hooks/useColorScheme';
+import { FadeInView } from '../../src/components/FadeInView';
+import { AnimatedPressable } from '../../src/components/AnimatedPressable';
+import { useEntranceAnimation } from '../../src/utils/animations';
 import { Vehicle, VehicleType, FuelType } from '../../src/types';
 
 const VEHICLE_TYPES: VehicleType[] = ['Car', 'Bike', 'Scooty', 'Truck'];
@@ -30,16 +34,18 @@ export default function EditVehicleScreen({ vehicleId }: Props) {
   const [range, setRange] = useState(String(vehicle?.range || ''));
   const [showOptions, setShowOptions] = useState<'type' | 'fuel' | null>(null);
 
+  const headerAnim = useEntranceAnimation(0, 30);
+
   if (!vehicle) {
     return (
       <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, headerAnim]}>
           <Pressable onPress={() => router.back()}>
             <Text style={[styles.cancelText, { color: colors.primary }]}>Back</Text>
           </Pressable>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Vehicle Not Found</Text>
           <View style={{ width: 50 }} />
-        </View>
+        </Animated.View>
       </View>
     );
   }
@@ -68,7 +74,7 @@ export default function EditVehicleScreen({ vehicleId }: Props) {
       style={[styles.container, { backgroundColor: colors.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <Animated.View style={[styles.header, { paddingTop: insets.top }, headerAnim]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Text style={[styles.cancelText, { color: colors.primary }]}>Back</Text>
         </Pressable>
@@ -78,105 +84,119 @@ export default function EditVehicleScreen({ vehicleId }: Props) {
             Save
           </Text>
         </Pressable>
-      </View>
+      </Animated.View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Vehicle Name</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
-            value={name}
-            onChangeText={setName}
-          />
-        </View>
+        <FadeInView index={0}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Vehicle Name</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
+              value={name}
+              onChangeText={setName}
+            />
+          </View>
+        </FadeInView>
 
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Vehicle Number</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
-            value={number}
-            onChangeText={setNumber}
-            autoCapitalize="characters"
-          />
-        </View>
+        <FadeInView index={1}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Vehicle Number</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
+              value={number}
+              onChangeText={setNumber}
+              autoCapitalize="characters"
+            />
+          </View>
+        </FadeInView>
 
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Vehicle Type</Text>
-          <Pressable
-            onPress={() => setShowOptions(showOptions === 'type' ? null : 'type')}
-            style={[styles.selectButton, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
+        <FadeInView index={2}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Vehicle Type</Text>
+            <Pressable
+              onPress={() => setShowOptions(showOptions === 'type' ? null : 'type')}
+              style={[styles.selectButton, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
+            >
+              <Text style={[styles.selectText, { color: colors.text }]}>{type}</Text>
+              <Text style={[styles.selectArrow, { color: colors.textSecondary }]}>▼</Text>
+            </Pressable>
+            {showOptions === 'type' && (
+              <View style={[styles.optionsContainer, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                {VEHICLE_TYPES.map((t) => (
+                  <Pressable
+                    key={t}
+                    onPress={() => { setType(t); setShowOptions(null); }}
+                    style={[styles.optionItem, { backgroundColor: type === t ? colors.primary + '15' : 'transparent' }]}
+                  >
+                    <Text style={[styles.optionText, { color: type === t ? colors.primary : colors.text }]}>{t}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        </FadeInView>
+
+        <FadeInView index={3}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Fuel Tank Capacity (L)</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
+              value={capacity}
+              onChangeText={setCapacity}
+              keyboardType="decimal-pad"
+            />
+          </View>
+        </FadeInView>
+
+        <FadeInView index={4}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Full Tank Range (KM)</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
+              value={range}
+              onChangeText={setRange}
+              keyboardType="decimal-pad"
+              placeholder="e.g. 600"
+              placeholderTextColor={colors.textMuted}
+            />
+            <Text style={[styles.fieldHint, { color: colors.textMuted }]}>Approximate distance on a full tank</Text>
+          </View>
+        </FadeInView>
+
+        <FadeInView index={5}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Fuel Type</Text>
+            <Pressable
+              onPress={() => setShowOptions(showOptions === 'fuel' ? null : 'fuel')}
+              style={[styles.selectButton, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
+            >
+              <Text style={[styles.selectText, { color: colors.text }]}>{fuelType}</Text>
+              <Text style={[styles.selectArrow, { color: colors.textSecondary }]}>▼</Text>
+            </Pressable>
+            {showOptions === 'fuel' && (
+              <View style={[styles.optionsContainer, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                {FUEL_TYPES.map((f) => (
+                  <Pressable
+                    key={f}
+                    onPress={() => { setFuelType(f); setShowOptions(null); }}
+                    style={[styles.optionItem, { backgroundColor: fuelType === f ? colors.primary + '15' : 'transparent' }]}
+                  >
+                    <Text style={[styles.optionText, { color: fuelType === f ? colors.primary : colors.text }]}>{f}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        </FadeInView>
+
+        <FadeInView index={6}>
+          <AnimatedPressable
+            onPress={handleDelete}
+            style={[styles.deleteButton, { borderColor: colors.danger }]}
           >
-            <Text style={[styles.selectText, { color: colors.text }]}>{type}</Text>
-            <Text style={[styles.selectArrow, { color: colors.textSecondary }]}>▼</Text>
-          </Pressable>
-          {showOptions === 'type' && (
-            <View style={[styles.optionsContainer, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
-              {VEHICLE_TYPES.map((t) => (
-                <Pressable
-                  key={t}
-                  onPress={() => { setType(t); setShowOptions(null); }}
-                  style={[styles.optionItem, { backgroundColor: type === t ? colors.primary + '15' : 'transparent' }]}
-                >
-                  <Text style={[styles.optionText, { color: type === t ? colors.primary : colors.text }]}>{t}</Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
-        </View>
-
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Fuel Tank Capacity (L)</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
-            value={capacity}
-            onChangeText={setCapacity}
-            keyboardType="decimal-pad"
-          />
-        </View>
-
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Full Tank Range (KM)</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
-            value={range}
-            onChangeText={setRange}
-            keyboardType="decimal-pad"
-            placeholder="e.g. 600"
-            placeholderTextColor={colors.textMuted}
-          />
-          <Text style={[styles.fieldHint, { color: colors.textMuted }]}>Approximate distance on a full tank</Text>
-        </View>
-
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Fuel Type</Text>
-          <Pressable
-            onPress={() => setShowOptions(showOptions === 'fuel' ? null : 'fuel')}
-            style={[styles.selectButton, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
-          >
-            <Text style={[styles.selectText, { color: colors.text }]}>{fuelType}</Text>
-            <Text style={[styles.selectArrow, { color: colors.textSecondary }]}>▼</Text>
-          </Pressable>
-          {showOptions === 'fuel' && (
-            <View style={[styles.optionsContainer, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
-              {FUEL_TYPES.map((f) => (
-                <Pressable
-                  key={f}
-                  onPress={() => { setFuelType(f); setShowOptions(null); }}
-                  style={[styles.optionItem, { backgroundColor: fuelType === f ? colors.primary + '15' : 'transparent' }]}
-                >
-                  <Text style={[styles.optionText, { color: fuelType === f ? colors.primary : colors.text }]}>{f}</Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
-        </View>
-
-        <Pressable
-          onPress={handleDelete}
-          style={[styles.deleteButton, { borderColor: colors.danger }]}
-        >
-          <Text style={[styles.deleteText, { color: colors.danger }]}>Delete Vehicle</Text>
-        </Pressable>
+            <Text style={[styles.deleteText, { color: colors.danger }]}>Delete Vehicle</Text>
+          </AnimatedPressable>
+        </FadeInView>
       </ScrollView>
     </KeyboardAvoidingView>
   );

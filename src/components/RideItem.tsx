@@ -1,74 +1,81 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ride } from '../types';
 import { FuelTrackTheme } from '../store/theme';
+import { useEntranceAnimation, usePressAnimation } from '../utils/animations';
 
 interface Props {
   ride: Ride;
   onPress?: () => void;
   onLongPress?: () => void;
   theme: 'light' | 'dark';
+  index?: number;
 }
 
-export function RideItem({ ride, onPress, onLongPress, theme }: Props) {
+export function RideItem({ ride, onPress, onLongPress, theme, index = 0 }: Props) {
   const c = FuelTrackTheme[theme];
   const d = new Date(ride.createdAt);
+  const animStyle = useEntranceAnimation(index);
+  const { pressStyle, pressIn, pressOut } = usePressAnimation();
+
   return (
-    <Pressable
-      onPress={onPress}
-      onLongPress={onLongPress}
-      style={({ pressed }) => [
-        s.card,
-        {
-          backgroundColor: c.card,
-          borderLeftColor: c.success,
-          shadowColor: c.cardShadow,
-          opacity: pressed ? 0.95 : 1,
-        },
-      ]}
-    >
-      <View style={s.top}>
-        <View style={s.dateCol}>
-          <Text style={[s.day, { color: c.text }]}>{d.getDate()}</Text>
-          <Text style={[s.mon, { color: c.textMuted }]}>
-            {d.toLocaleString('default', { month: 'short' })}
-          </Text>
-        </View>
-        <View style={s.info}>
-          <View style={s.row}>
-            <Text style={s.f}>🛣️</Text>
-            <Text style={[s.distance, { color: c.text }]}>{ride.distance} km</Text>
-            <Text style={[s.sep, { color: c.textMuted }]}>|</Text>
-            <Text style={[s.fuel, { color: c.warning }]}>{ride.fuelUsed} L</Text>
+    <Animated.View style={[pressStyle, animStyle]}>
+      <View
+        onTouchStart={pressIn}
+        onTouchEnd={pressOut}
+        style={[
+          s.card,
+          {
+            backgroundColor: c.card,
+            borderLeftColor: c.success,
+            shadowColor: c.cardShadow,
+          },
+        ]}
+      >
+        <View style={s.top}>
+          <View style={s.dateCol}>
+            <Text style={[s.day, { color: c.text }]}>{d.getDate()}</Text>
+            <Text style={[s.mon, { color: c.textMuted }]}>
+              {d.toLocaleString('default', { month: 'short' })}
+            </Text>
           </View>
-          <Text style={[s.odo, { color: c.textMuted }]}>
-            Odometer: {ride.currentOdometer.toLocaleString()} km
-          </Text>
+          <View style={s.info}>
+            <View style={s.row}>
+              <Text style={s.f}>🛣️</Text>
+              <Text style={[s.distance, { color: c.text }]}>{ride.distance} km</Text>
+              <Text style={[s.sep, { color: c.textMuted }]}>|</Text>
+              <Text style={[s.fuel, { color: c.warning }]}>{ride.fuelUsed} L</Text>
+            </View>
+            <Text style={[s.odo, { color: c.textMuted }]}>
+              Odometer: {ride.currentOdometer.toLocaleString()} km
+            </Text>
+          </View>
         </View>
+        <View style={[s.stats, { borderTopColor: c.border }]}>
+          <View style={s.si}>
+            <Text style={[s.sv, { color: c.primary }]}>{ride.rideType}</Text>
+            <Text style={[s.sl, { color: c.textMuted }]}>Type</Text>
+          </View>
+          <View style={s.si}>
+            <Text style={[s.sv, { color: c.text }]}>
+              {ride.remainingRange.toLocaleString()} km
+            </Text>
+            <Text style={[s.sl, { color: c.textMuted }]}>Range Left</Text>
+          </View>
+          <View style={s.si}>
+            <Text style={[s.sv, { color: c.text }]}>
+              {ride.distance} km
+            </Text>
+            <Text style={[s.sl, { color: c.textMuted }]}>Distance</Text>
+          </View>
+        </View>
+        {ride.notes ? (
+          <Text style={[s.notes, { color: c.textMuted }]} numberOfLines={1}>
+            {ride.notes}
+          </Text>
+        ) : null}
       </View>
-      <View style={[s.stats, { borderTopColor: c.border }]}>
-        <View style={s.si}>
-          <Text style={[s.sv, { color: c.primary }]}>{ride.rideType}</Text>
-          <Text style={[s.sl, { color: c.textMuted }]}>Type</Text>
-        </View>
-        <View style={s.si}>
-          <Text style={[s.sv, { color: c.text }]}>
-            {ride.remainingRange.toLocaleString()} km
-          </Text>
-          <Text style={[s.sl, { color: c.textMuted }]}>Range Left</Text>
-        </View>
-        <View style={s.si}>
-          <Text style={[s.sv, { color: c.text }]}>
-            {ride.distance} km
-          </Text>
-          <Text style={[s.sl, { color: c.textMuted }]}>Distance</Text>
-        </View>
-      </View>
-      {ride.notes ? (
-        <Text style={[s.notes, { color: c.textMuted }]} numberOfLines={1}>
-          {ride.notes}
-        </Text>
-      ) : null}
-    </Pressable>
+    </Animated.View>
   );
 }
 

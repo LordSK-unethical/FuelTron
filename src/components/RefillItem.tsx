@@ -1,33 +1,44 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { View, Text, StyleSheet } from 'react-native';
 import { Refill } from '../types';
 import { FuelTrackTheme } from '../store/theme';
+import { useEntranceAnimation, usePressAnimation } from '../utils/animations';
 
-interface Props { refill: Refill; kmpl?: number; distanceTraveled?: number; onPress?: () => void; onLongPress?: () => void; theme: 'light' | 'dark'; }
+interface Props { refill: Refill; kmpl?: number; distanceTraveled?: number; onPress?: () => void; onLongPress?: () => void; theme: 'light' | 'dark'; index?: number; }
 
-export function RefillItem({ refill, kmpl, distanceTraveled, onPress, onLongPress, theme }: Props) {
+export function RefillItem({ refill, kmpl, distanceTraveled, onPress, onLongPress, theme, index = 0 }: Props) {
   const c = FuelTrackTheme[theme];
   const d = new Date(refill.date);
+  const animStyle = useEntranceAnimation(index);
+  const { pressStyle, pressIn, pressOut } = usePressAnimation();
+
   return (
-    <Pressable onPress={onPress} onLongPress={onLongPress} style={({ pressed }) => [s.card, { backgroundColor: c.card, borderLeftColor: c.primary, shadowColor: c.cardShadow, opacity: pressed ? 0.95 : 1 }]}>
-      <View style={s.top}>
-        <View style={s.dateCol}>
-          <Text style={[s.day, { color: c.text }]}>{d.getDate()}</Text>
-          <Text style={[s.mon, { color: c.textMuted }]}>{d.toLocaleString('default', { month: 'short' })}</Text>
+    <Animated.View style={[pressStyle, animStyle]}>
+      <View
+        onTouchStart={pressIn}
+        onTouchEnd={pressOut}
+        style={[s.card, { backgroundColor: c.card, borderLeftColor: c.primary, shadowColor: c.cardShadow }]}
+      >
+        <View style={s.top}>
+          <View style={s.dateCol}>
+            <Text style={[s.day, { color: c.text }]}>{d.getDate()}</Text>
+            <Text style={[s.mon, { color: c.textMuted }]}>{d.toLocaleString('default', { month: 'short' })}</Text>
+          </View>
+          <View style={s.info}>
+            <View style={s.row}><Text style={s.f}>⛽</Text><Text style={[s.fuel, { color: c.text }]}>{refill.fuelAdded} L</Text><Text style={[s.sep, { color: c.textMuted }]}>|</Text><Text style={[s.cost, { color: c.primary }]}>₹{refill.fuelCost.toFixed(2)}</Text></View>
+            <Text style={[s.odo, { color: c.textMuted }]}>Odometer: {refill.odometer.toLocaleString()} km</Text>
+          </View>
         </View>
-        <View style={s.info}>
-          <View style={s.row}><Text style={s.f}>⛽</Text><Text style={[s.fuel, { color: c.text }]}>{refill.fuelAdded} L</Text><Text style={[s.sep, { color: c.textMuted }]}>|</Text><Text style={[s.cost, { color: c.primary }]}>₹{refill.fuelCost.toFixed(2)}</Text></View>
-          <Text style={[s.odo, { color: c.textMuted }]}>Odometer: {refill.odometer.toLocaleString()} km</Text>
-        </View>
+        {(kmpl !== undefined || distanceTraveled !== undefined) && (
+          <View style={[s.stats, { borderTopColor: c.border }]}>
+            {kmpl !== undefined && <StatItem value={`${kmpl.toFixed(1)}`} label="KMPL" color={c.primary} c={c} />}
+            {distanceTraveled !== undefined && <StatItem value={`${distanceTraveled.toFixed(0)}`} label="km" color={c.text} c={c} />}
+            <StatItem value={refill.fullTank ? 'Full' : 'Partial'} label="Tank" color={refill.fullTank ? c.primary : c.warning} c={c} />
+          </View>
+        )}
+        {refill.notes ? <Text style={[s.notes, { color: c.textMuted }]} numberOfLines={1}>{refill.notes}</Text> : null}
       </View>
-      {(kmpl !== undefined || distanceTraveled !== undefined) && (
-        <View style={[s.stats, { borderTopColor: c.border }]}>
-          {kmpl !== undefined && <StatItem value={`${kmpl.toFixed(1)}`} label="KMPL" color={c.primary} c={c} />}
-          {distanceTraveled !== undefined && <StatItem value={`${distanceTraveled.toFixed(0)}`} label="km" color={c.text} c={c} />}
-          <StatItem value={refill.fullTank ? 'Full' : 'Partial'} label="Tank" color={refill.fullTank ? c.primary : c.warning} c={c} />
-        </View>
-      )}
-      {refill.notes ? <Text style={[s.notes, { color: c.textMuted }]} numberOfLines={1}>{refill.notes}</Text> : null}
-    </Pressable>
+    </Animated.View>
   );
 }
 

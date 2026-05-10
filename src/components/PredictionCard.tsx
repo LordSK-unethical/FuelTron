@@ -1,15 +1,29 @@
+import { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { Prediction } from '../types';
 import { FuelTrackTheme } from '../store/theme';
+import { useEntranceAnimation } from '../utils/animations';
 
-interface Props { prediction: Prediction; theme: 'light' | 'dark'; }
+interface Props { prediction: Prediction; theme: 'light' | 'dark'; index?: number; }
 
-export function PredictionCard({ prediction, theme }: Props) {
+export function PredictionCard({ prediction, theme, index = 0 }: Props) {
   const c = FuelTrackTheme[theme];
   const pct = Math.min(100, Math.max(0, prediction.fuelPercent));
+  const animStyle = useEntranceAnimation(index);
+
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = withTiming(pct, { duration: 700, easing: Easing.out(Easing.cubic) });
+  }, [pct, progress]);
+
+  const progStyle = useAnimatedStyle(() => ({
+    width: `${progress.value}%`,
+  }));
 
   return (
-    <View style={[s.card, { backgroundColor: c.card, borderColor: prediction.lowFuel ? c.danger + '40' : c.border, shadowColor: c.cardShadow }]}>
+    <Animated.View style={[s.card, { backgroundColor: c.card, borderColor: prediction.lowFuel ? c.danger + '40' : c.border, shadowColor: c.cardShadow }, animStyle]}>
       <View style={s.head}>
         <Text style={s.icon}>⛽</Text>
         <Text style={[s.title, { color: c.text }]}>Refuel Prediction</Text>
@@ -38,13 +52,13 @@ export function PredictionCard({ prediction, theme }: Props) {
       </View>
 
       <View style={[s.progBg, { backgroundColor: c.bgSecondary }]}>
-        <View style={[s.progFill, { width: `${pct}%`, backgroundColor: prediction.lowFuel ? c.danger : c.primary }]} />
+        <Animated.View style={[s.progFill, { backgroundColor: prediction.lowFuel ? c.danger : c.primary }, progStyle]} />
       </View>
 
       <Text style={[s.footer, { color: c.textMuted }]}>
-        {prediction.lowFuel ? 'Low fuel — refill soon' : `Based on your average mileage`}
+        {prediction.lowFuel ? 'Low fuel — refill soon' : 'Based on your average mileage'}
       </Text>
-    </View>
+    </Animated.View>
   );
 }
 

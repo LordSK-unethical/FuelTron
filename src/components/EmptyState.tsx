@@ -1,21 +1,33 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { FuelTrackTheme } from '../store/theme';
+import { useEntranceAnimation, usePressAnimation } from '../utils/animations';
 
 interface Props { icon: string; title: string; subtitle: string; actionLabel?: string; onAction?: () => void; theme: 'light' | 'dark'; }
 
 export function EmptyState({ icon, title, subtitle, actionLabel, onAction, theme }: Props) {
   const c = FuelTrackTheme[theme];
+  const animStyle = useEntranceAnimation(0);
+  const { pressStyle, pressIn, pressOut } = usePressAnimation();
+
   return (
-    <View style={s.container}>
+    <Animated.View style={[s.container, animStyle]}>
       <View style={[s.iconWrap, { backgroundColor: c.primary + '12' }]}><Text style={s.icon}>{icon}</Text></View>
       <Text style={[s.title, { color: c.text }]}>{title}</Text>
       <Text style={[s.sub, { color: c.textSecondary }]}>{subtitle}</Text>
       {actionLabel && onAction && (
-        <Pressable onPress={onAction} style={({ pressed }) => [s.btn, { backgroundColor: c.primary, opacity: pressed ? 0.9 : 1 }]}>
-          <Text style={s.btnText}>{actionLabel}</Text>
-        </Pressable>
+        <Animated.View style={pressStyle}>
+          <Pressable
+            onPressIn={pressIn}
+            onPressOut={pressOut}
+            onPress={onAction}
+            style={[s.btn, { backgroundColor: c.primary }]}
+          >
+            <Text style={s.btnText}>{actionLabel}</Text>
+          </Pressable>
+        </Animated.View>
       )}
-    </View>
+    </Animated.View>
   );
 }
 

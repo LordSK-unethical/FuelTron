@@ -4,6 +4,7 @@ import { useStore } from '../../src/store/useStore';
 import { FuelTrackTheme } from '../../src/store/theme';
 import { useTheme } from '../../src/hooks/useColorScheme';
 import { EmptyState } from '../../src/components/EmptyState';
+import { FadeInView } from '../../src/components/FadeInView';
 import { KMPLChart } from '../../src/charts/KMPLChart';
 import { FuelCostChart } from '../../src/charts/FuelCostChart';
 import { DistanceChart } from '../../src/charts/DistanceChart';
@@ -16,6 +17,16 @@ import {
   getTotalFuelConsumed,
   getRideStats,
 } from '../../src/utils/calculations';
+
+function StatCell({ icon, value, label, color, labelColor }: { icon: string; value: string; label: string; color: string; labelColor?: string }) {
+  return (
+    <View style={styles.statCell}>
+      <Text style={styles.statIcon}>{icon}</Text>
+      <Text style={[styles.statValue, { color }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: labelColor }]}>{label}</Text>
+    </View>
+  );
+}
 
 export default function AnalyticsScreen() {
   const theme = useTheme();
@@ -64,74 +75,38 @@ export default function AnalyticsScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.sectionCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Fuel Overview</Text>
-          <View style={styles.statGrid}>
-            <View style={styles.statCell}>
-              <Text style={styles.statIcon}>📊</Text>
-              <Text style={[styles.statValue, { color: colors.primary }]}>{avgKmpl.toFixed(1)}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Avg KMPL</Text>
-            </View>
-            <View style={styles.statCell}>
-              <Text style={styles.statIcon}>⛽</Text>
-              <Text style={[styles.statValue, { color: '#FF8C00' }]}>{totalFuel.toFixed(1)}L</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Fuel</Text>
-            </View>
-            <View style={styles.statCell}>
-              <Text style={styles.statIcon}>📍</Text>
-              <Text style={[styles.statValue, { color: colors.success }]}>{totalDistance.toFixed(0)} km</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Distance</Text>
-            </View>
-            <View style={styles.statCell}>
-              <Text style={styles.statIcon}>💰</Text>
-              <Text style={[styles.statValue, { color: colors.primary }]}>₹{totalCost.toFixed(2)}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Cost</Text>
+        <FadeInView index={0}>
+          <View style={[styles.sectionCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Fuel Overview</Text>
+            <View style={styles.statGrid}>
+              <StatCell icon="📊" value={avgKmpl.toFixed(1)} label="Avg KMPL" labelColor={colors.textMuted} color={colors.primary} />
+              <StatCell icon="⛽" value={`${totalFuel.toFixed(1)}L`} label="Total Fuel" labelColor={colors.textMuted} color="#FF8C00" />
+              <StatCell icon="📍" value={`${totalDistance.toFixed(0)} km`} label="Total Distance" labelColor={colors.textMuted} color={colors.success} />
+              <StatCell icon="💰" value={`₹${totalCost.toFixed(2)}`} label="Total Cost" labelColor={colors.textMuted} color={colors.primary} />
             </View>
           </View>
-        </View>
+        </FadeInView>
 
         {rideStats && rideStats.totalRides > 0 && (
-          <View style={[styles.sectionCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Ride Overview</Text>
-            <View style={styles.statGrid}>
-              <View style={styles.statCell}>
-                <Text style={styles.statIcon}>🛣️</Text>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{rideStats.totalRides}</Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Rides</Text>
-              </View>
-              <View style={styles.statCell}>
-                <Text style={styles.statIcon}>📏</Text>
-                <Text style={[styles.statValue, { color: colors.success }]}>{rideStats.avgRideDistance} km</Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Avg Ride</Text>
-              </View>
-              <View style={styles.statCell}>
-                <Text style={styles.statIcon}>📅</Text>
-                <Text style={[styles.statValue, { color: colors.warning }]}>{rideStats.weekDistance} km</Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Week Distance</Text>
-              </View>
-              <View style={styles.statCell}>
-                <Text style={styles.statIcon}>📆</Text>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{rideStats.monthDistance} km</Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Month Distance</Text>
-              </View>
-              <View style={styles.statCell}>
-                <Text style={styles.statIcon}>📊</Text>
-                <Text style={[styles.statValue, { color: '#FF8C00' }]}>{rideStats.avgDailyUsage} km</Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Avg Daily</Text>
-              </View>
-              <View style={styles.statCell}>
-                <Text style={styles.statIcon}>⛽</Text>
-                <Text style={[styles.statValue, { color: colors.danger }]}>{rideStats.fuelConsumedToday} L</Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Today's Fuel</Text>
+          <FadeInView index={1}>
+            <View style={[styles.sectionCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Ride Overview</Text>
+              <View style={styles.statGrid}>
+                <StatCell icon="🛣️" value={String(rideStats.totalRides)} label="Total Rides" labelColor={colors.textMuted} color={colors.primary} />
+                <StatCell icon="📏" value={`${rideStats.avgRideDistance} km`} label="Avg Ride" labelColor={colors.textMuted} color={colors.success} />
+                <StatCell icon="📅" value={`${rideStats.weekDistance} km`} label="Week Distance" labelColor={colors.textMuted} color={colors.warning} />
+                <StatCell icon="📆" value={`${rideStats.monthDistance} km`} label="Month Distance" labelColor={colors.textMuted} color={colors.primary} />
+                <StatCell icon="📊" value={`${rideStats.avgDailyUsage} km`} label="Avg Daily" labelColor={colors.textMuted} color="#FF8C00" />
+                <StatCell icon="⛽" value={`${rideStats.fuelConsumedToday} L`} label="Today's Fuel" labelColor={colors.textMuted} color={colors.danger} />
               </View>
             </View>
-          </View>
+          </FadeInView>
         )}
 
         <View style={styles.chartsSection}>
-          <KMPLChart data={mileageData} theme={theme} />
-          <FuelCostChart data={monthlyExpenses} theme={theme} />
-          <DistanceChart data={mileageData} theme={theme} />
+          <FadeInView index={2}><KMPLChart data={mileageData} theme={theme} /></FadeInView>
+          <FadeInView index={3}><FuelCostChart data={monthlyExpenses} theme={theme} /></FadeInView>
+          <FadeInView index={4}><DistanceChart data={mileageData} theme={theme} /></FadeInView>
         </View>
       </ScrollView>
     </View>

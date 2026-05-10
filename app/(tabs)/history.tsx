@@ -2,12 +2,16 @@ import { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import Animated from 'react-native-reanimated';
 import { useStore } from '../../src/store/useStore';
 import { FuelTrackTheme } from '../../src/store/theme';
 import { useTheme } from '../../src/hooks/useColorScheme';
 import { RefillItem } from '../../src/components/RefillItem';
 import { RideItem } from '../../src/components/RideItem';
 import { EmptyState } from '../../src/components/EmptyState';
+import { FadeInView } from '../../src/components/FadeInView';
+import { AnimatedPressable } from '../../src/components/AnimatedPressable';
+import { usePressAnimation } from '../../src/utils/animations';
 import { getVehicleRefills, computeRefillData } from '../../src/utils/calculations';
 
 export default function HistoryScreen() {
@@ -46,6 +50,12 @@ export default function HistoryScreen() {
   const totalFuel = filteredRefills.reduce((s, r) => s + r.fuelAdded, 0);
   const totalCost = filteredRefills.reduce((s, r) => s + r.fuelCost, 0);
 
+  const { pressStyle: fabPressStyle, pressIn: fabPressIn, pressOut: fabPressOut } = usePressAnimation();
+
+  const vehicleRides = activeVehicle
+    ? rides.filter((r) => r.vehicleId === activeVehicle.id).sort((a, b) => b.createdAt - a.createdAt)
+    : [];
+
   return (
     <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
       <View style={[styles.header, { paddingHorizontal: 16, paddingTop: 8 }]}>
@@ -73,47 +83,53 @@ export default function HistoryScreen() {
         />
       ) : (
         <>
-          <Pressable
-            onPress={() => setShowFilters(!showFilters)}
-            style={[styles.filterToggle, { backgroundColor: colors.card, borderColor: colors.border }]}
-          >
-            <Text style={[styles.filterToggleText, { color: colors.text }]}>
-              {showFilters ? 'Hide Filters' : 'Filter by Month'}
-            </Text>
-          </Pressable>
+          <FadeInView index={0}>
+            <AnimatedPressable
+              onPress={() => setShowFilters(!showFilters)}
+              style={[styles.filterToggle, { backgroundColor: colors.card, borderColor: colors.border }]}
+            >
+              <Text style={[styles.filterToggleText, { color: colors.text }]}>
+                {showFilters ? 'Hide Filters' : 'Filter by Month'}
+              </Text>
+            </AnimatedPressable>
+          </FadeInView>
 
           {showFilters && (
-            <View style={[styles.filterBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <TextInput
-                style={[styles.monthInput, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
-                placeholder="YYYY-MM (e.g. 2026-05)"
-                placeholderTextColor={colors.textMuted}
-                value={searchMonth}
-                onChangeText={setSearchMonth}
-              />
-              {searchMonth ? (
-                <Pressable onPress={() => setSearchMonth('')}>
-                  <Text style={[styles.clearBtn, { color: colors.primary }]}>Clear</Text>
-                </Pressable>
-              ) : null}
-            </View>
+            <FadeInView index={1}>
+              <View style={[styles.filterBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <TextInput
+                  style={[styles.monthInput, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
+                  placeholder="YYYY-MM (e.g. 2026-05)"
+                  placeholderTextColor={colors.textMuted}
+                  value={searchMonth}
+                  onChangeText={setSearchMonth}
+                />
+                {searchMonth ? (
+                  <Pressable onPress={() => setSearchMonth('')}>
+                    <Text style={[styles.clearBtn, { color: colors.primary }]}>Clear</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            </FadeInView>
           )}
 
           {filteredRefills.length > 0 && (
-            <View style={[styles.summaryBar, { backgroundColor: colors.card }]}>
-              <View style={styles.summaryItem}>
-                <Text style={[styles.summaryValue, { color: colors.text }]}>{totalFuel.toFixed(1)}L</Text>
-                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Total Fuel</Text>
+            <FadeInView index={2}>
+              <View style={[styles.summaryBar, { backgroundColor: colors.card }]}>
+                <View style={styles.summaryItem}>
+                  <Text style={[styles.summaryValue, { color: colors.text }]}>{totalFuel.toFixed(1)}L</Text>
+                  <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Total Fuel</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={[styles.summaryValue, { color: colors.primary }]}>₹{totalCost.toFixed(2)}</Text>
+                  <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Total Cost</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={[styles.summaryValue, { color: colors.text }]}>{filteredRefills.length}</Text>
+                  <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Entries</Text>
+                </View>
               </View>
-              <View style={styles.summaryItem}>
-                <Text style={[styles.summaryValue, { color: colors.primary }]}>₹{totalCost.toFixed(2)}</Text>
-                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Total Cost</Text>
-              </View>
-              <View style={styles.summaryItem}>
-                <Text style={[styles.summaryValue, { color: colors.text }]}>{filteredRefills.length}</Text>
-                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Entries</Text>
-              </View>
-            </View>
+            </FadeInView>
           )}
 
           <ScrollView
@@ -122,7 +138,7 @@ export default function HistoryScreen() {
             showsVerticalScrollIndicator={false}
           >
             <Text style={[styles.sectionLabel, { color: colors.text }]}>Refills</Text>
-            {filteredRefills.map((refill) => {
+            {filteredRefills.map((refill, i) => {
               const { kmpl, distance } = displayMileage(refill);
               return (
                 <RefillItem
@@ -133,25 +149,24 @@ export default function HistoryScreen() {
                   onPress={() => (router.push as (path: string) => void)(`/refill/${refill.id}`)}
                   onLongPress={() => deleteRefill(refill.id)}
                   theme={theme}
+                  index={i}
                 />
               );
             })}
 
-            {activeVehicle && rides.filter((r) => r.vehicleId === activeVehicle.id).length > 0 && (
+            {vehicleRides.length > 0 && (
               <>
                 <View style={[styles.sectionDivider, { borderBottomColor: colors.border }]} />
                 <Text style={[styles.sectionLabel, { color: colors.text }]}>Rides</Text>
-                {rides
-                  .filter((r) => r.vehicleId === activeVehicle.id)
-                  .sort((a, b) => b.createdAt - a.createdAt)
-                  .map((ride) => (
-                    <RideItem
-                      key={ride.id}
-                      ride={ride}
-                      onLongPress={() => deleteRide(ride.id)}
-                      theme={theme}
-                    />
-                  ))}
+                {vehicleRides.map((ride, i) => (
+                  <RideItem
+                    key={ride.id}
+                    ride={ride}
+                    onLongPress={() => deleteRide(ride.id)}
+                    theme={theme}
+                    index={i}
+                  />
+                ))}
               </>
             )}
           </ScrollView>
@@ -159,12 +174,16 @@ export default function HistoryScreen() {
       )}
 
       {activeVehicle && vehicleRefills.length > 0 && (
-        <Pressable
-          onPress={() => router.push('/add-refill')}
-          style={[styles.fab, { backgroundColor: colors.primary }]}
-        >
-          <Text style={styles.fabText}>+</Text>
-        </Pressable>
+        <Animated.View style={[fabPressStyle, styles.fabContainer]}>
+          <Pressable
+            onPressIn={fabPressIn}
+            onPressOut={fabPressOut}
+            onPress={() => router.push('/add-refill')}
+            style={[styles.fab, { backgroundColor: colors.primary }]}
+          >
+            <Text style={styles.fabText}>+</Text>
+          </Pressable>
+        </Animated.View>
       )}
     </View>
   );
@@ -216,10 +235,12 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   sectionLabel: { fontSize: 16, fontWeight: '700', marginBottom: 10, marginTop: 4 },
   sectionDivider: { borderBottomWidth: 1, marginVertical: 16 },
-  fab: {
+  fabContainer: {
     position: 'absolute',
     bottom: 24,
     right: 20,
+  },
+  fab: {
     width: 56,
     height: 56,
     borderRadius: 28,

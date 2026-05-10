@@ -1,13 +1,30 @@
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
+import { useEffect } from 'react';
 import { useTheme } from '../../src/hooks/useColorScheme';
 import { FuelTrackTheme } from '../../src/store/theme';
 
 function TabIcon({ icon, focused, color }: { icon: string; focused: boolean; color: string }) {
+  const scale = useSharedValue(focused ? 1 : 0.85);
+  const opacity = useSharedValue(focused ? 1 : 0.5);
+
+  useEffect(() => {
+    scale.value = withSpring(focused ? 1 : 0.85, { damping: 15, stiffness: 150 });
+    opacity.value = withTiming(focused ? 1 : 0.5, { duration: 200 });
+  }, [focused, scale, opacity]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
   return (
-    <View style={[styles.iconContainer, focused && { backgroundColor: color + '15' }]}>
-      <Text style={[styles.icon, { opacity: focused ? 1 : 0.6 }]}>{icon}</Text>
-    </View>
+    <Animated.View style={animStyle}>
+      <View style={[styles.iconContainer, focused && { backgroundColor: color + '20' }]}>
+        <Text style={styles.icon}>{icon}</Text>
+      </View>
+    </Animated.View>
   );
 }
 

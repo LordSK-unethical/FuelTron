@@ -1,26 +1,38 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { Vehicle } from '../types';
 import { FuelTrackTheme } from '../store/theme';
+import { useEntranceAnimation, usePressAnimation } from '../utils/animations';
 
-interface Props { vehicle: Vehicle; isActive: boolean; onPress: (v: Vehicle) => void; theme: 'light' | 'dark'; }
+interface Props { vehicle: Vehicle; isActive: boolean; onPress: (v: Vehicle) => void; theme: 'light' | 'dark'; index?: number; }
 
 const emojis: Record<string, string> = { Car: '🚗', Bike: '🏍️', Scooty: '🛵', Truck: '🚛' };
 const fuelDot: Record<string, string> = { Petrol: '#FF8C00', Diesel: '#8B4513', Electric: '#00CED1', CNG: '#32CD32' };
 
-export function VehicleCard({ vehicle, isActive, onPress, theme }: Props) {
+export function VehicleCard({ vehicle, isActive, onPress, theme, index = 0 }: Props) {
   const c = FuelTrackTheme[theme];
+  const animStyle = useEntranceAnimation(index);
+  const { pressStyle, pressIn, pressOut } = usePressAnimation();
+
   return (
-    <Pressable onPress={() => onPress(vehicle)} style={({ pressed }) => [s.card, { backgroundColor: c.card, borderColor: isActive ? c.primary : c.border, shadowColor: c.cardShadow, opacity: pressed ? 0.95 : 1 }]}>
-      <View style={s.top}>
-        <View style={[s.iconWrap, { backgroundColor: c.primary + '18' }]}><Text style={s.icon}>{emojis[vehicle.type] || '🚗'}</Text></View>
-        <View style={s.mid}><Text style={[s.name, { color: c.text }]}>{vehicle.name}</Text><Text style={[s.plate, { color: c.textMuted }]}>{vehicle.number}</Text></View>
-        <View style={[s.badge, { backgroundColor: isActive ? c.primary : c.bgSecondary }]}><Text style={[s.badgeText, { color: isActive ? '#000' : c.textMuted }]}>{isActive ? 'Active' : 'Select'}</Text></View>
-      </View>
-      <View style={[s.meta, { borderTopColor: c.border }]}>
-        <MI label="Type" value={vehicle.type} c={c} /><MI label="Fuel" value={vehicle.fuelType} c={c} dot color={fuelDot[vehicle.fuelType]} />
-        <MI label="Range" value={`${vehicle.range}km`} c={c} /><MI label="Tank" value={`${vehicle.fuelTankCapacity}L`} c={c} />
-      </View>
-    </Pressable>
+    <Animated.View style={[pressStyle, animStyle]}>
+      <Pressable
+        onPressIn={pressIn}
+        onPressOut={pressOut}
+        onPress={() => onPress(vehicle)}
+        style={[s.card, { backgroundColor: c.card, borderColor: isActive ? c.primary : c.border, shadowColor: c.cardShadow }]}
+      >
+        <View style={s.top}>
+          <View style={[s.iconWrap, { backgroundColor: c.primary + '18' }]}><Text style={s.icon}>{emojis[vehicle.type] || '🚗'}</Text></View>
+          <View style={s.mid}><Text style={[s.name, { color: c.text }]}>{vehicle.name}</Text><Text style={[s.plate, { color: c.textMuted }]}>{vehicle.number}</Text></View>
+          <View style={[s.badge, { backgroundColor: isActive ? c.primary : c.bgSecondary }]}><Text style={[s.badgeText, { color: isActive ? '#000' : c.textMuted }]}>{isActive ? 'Active' : 'Select'}</Text></View>
+        </View>
+        <View style={[s.meta, { borderTopColor: c.border }]}>
+          <MI label="Type" value={vehicle.type} c={c} /><MI label="Fuel" value={vehicle.fuelType} c={c} dot color={fuelDot[vehicle.fuelType]} />
+          <MI label="Range" value={`${vehicle.range}km`} c={c} /><MI label="Tank" value={`${vehicle.fuelTankCapacity}L`} c={c} />
+        </View>
+      </Pressable>
+    </Animated.View>
   );
 }
 

@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import Animated from 'react-native-reanimated';
 import { useStore } from '../../src/store/useStore';
 import { FuelTrackTheme } from '../../src/store/theme';
 import { useTheme } from '../../src/hooks/useColorScheme';
@@ -8,6 +9,10 @@ import { StatCard } from '../../src/components/StatCard';
 import { PredictionCard } from '../../src/components/PredictionCard';
 import { FuelGauge } from '../../src/components/FuelGauge';
 import { EmptyState } from '../../src/components/EmptyState';
+import { FadeInView } from '../../src/components/FadeInView';
+import { AnimatedPressable } from '../../src/components/AnimatedPressable';
+import { AppLogo } from '../../src/components/AppLogo';
+import { useEntranceAnimation, usePressAnimation } from '../../src/utils/animations';
 import {
   getTotalDistance,
   getTotalFuelCost,
@@ -37,6 +42,10 @@ export default function DashboardScreen() {
 
   const vehicleName = activeVehicle?.name || 'No Vehicle';
 
+  const { pressStyle: fabPressStyle, pressIn: fabPressIn, pressOut: fabPressOut } = usePressAnimation();
+  const { pressStyle: fabSmallPressStyle, pressIn: fabSmallPressIn, pressOut: fabSmallPressOut } = usePressAnimation();
+  const headerAnim = useEntranceAnimation(0, 40);
+
   if (vehicles.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
@@ -54,10 +63,13 @@ export default function DashboardScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
-      <View style={[styles.header, { paddingHorizontal: 16, paddingTop: 8 }]}>
-        <Text style={[styles.greeting, { color: colors.textSecondary }]}>FuelTron</Text>
+      <Animated.View style={[styles.header, { paddingHorizontal: 16, paddingTop: 8 }, headerAnim]}>
+        <View style={styles.logoRow}>
+          <AppLogo size={40} />
+          <Text style={[styles.greeting, { color: colors.textSecondary }]}>FuelTron</Text>
+        </View>
         <Text style={[styles.title, { color: colors.text }]}>{vehicleName}</Text>
-      </View>
+      </Animated.View>
 
       <ScrollView
         style={styles.scrollView}
@@ -71,8 +83,8 @@ export default function DashboardScreen() {
             style={styles.vehicleTabs}
             contentContainerStyle={{ gap: 8 }}
           >
-            {vehicles.map((v) => (
-              <Pressable
+            {vehicles.map((v, i) => (
+              <AnimatedPressable
                 key={v.id}
                 onPress={() => setActiveVehicle(v.id)}
                 style={[
@@ -91,13 +103,15 @@ export default function DashboardScreen() {
                 >
                   {v.name}
                 </Text>
-              </Pressable>
+              </AnimatedPressable>
             ))}
           </ScrollView>
         )}
 
         {activeVehicle && prediction && (
-          <FuelGauge prediction={prediction} theme={theme} />
+          <FadeInView index={1} style={{ marginBottom: 8 }}>
+            <FuelGauge prediction={prediction} theme={theme} />
+          </FadeInView>
         )}
 
           <View style={styles.statsGrid}>
@@ -109,6 +123,7 @@ export default function DashboardScreen() {
                 icon="📊"
                 color={colors.primary}
                 theme={theme}
+                index={0}
               />
             </View>
             <View style={{ flex: 1, marginLeft: 6 }}>
@@ -118,6 +133,7 @@ export default function DashboardScreen() {
                 icon="📍"
                 color={colors.success}
                 theme={theme}
+                index={1}
               />
             </View>
           </View>
@@ -129,6 +145,7 @@ export default function DashboardScreen() {
                 icon="🎯"
                 color={colors.warning}
                 theme={theme}
+                index={2}
               />
             </View>
             <View style={{ flex: 1, marginLeft: 6 }}>
@@ -138,6 +155,7 @@ export default function DashboardScreen() {
                 icon="🛣️"
                 color={colors.primary}
                 theme={theme}
+                index={3}
               />
             </View>
           </View>
@@ -149,6 +167,7 @@ export default function DashboardScreen() {
                 icon="💰"
                 color={colors.primary}
                 theme={theme}
+                index={4}
               />
             </View>
             <View style={{ flex: 1, marginLeft: 6 }}>
@@ -158,61 +177,66 @@ export default function DashboardScreen() {
                 icon="💳"
                 color="#FF8C00"
                 theme={theme}
+                index={5}
               />
             </View>
           </View>
         </View>
 
-        {prediction && <PredictionCard prediction={prediction} theme={theme} />}
+        {prediction && <PredictionCard prediction={prediction} theme={theme} index={6} />}
 
         {lastRefill && (
-          <View style={[styles.lastRefillCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Last Refill</Text>
-            <View style={styles.lastRefillGrid}>
-              <View style={styles.refillStat}>
-                <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Fuel Added</Text>
-                <Text style={[styles.refillValue, { color: colors.text }]}>{lastRefill.fuelAdded} L</Text>
-              </View>
-              <View style={styles.refillStat}>
-                <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Cost</Text>
-                <Text style={[styles.refillValue, { color: colors.primary }]}>₹{lastRefill.fuelCost.toFixed(2)}</Text>
-              </View>
-              <View style={styles.refillStat}>
-                <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Odometer</Text>
-                <Text style={[styles.refillValue, { color: colors.text }]}>{lastRefill.odometer.toLocaleString()} km</Text>
-              </View>
-              <View style={styles.refillStat}>
-                <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Date</Text>
-                <Text style={[styles.refillValue, { color: colors.text }]}>
-                  {new Date(lastRefill.date).toLocaleDateString()}
-                </Text>
+          <FadeInView index={7}>
+            <View style={[styles.lastRefillCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Last Refill</Text>
+              <View style={styles.lastRefillGrid}>
+                <View style={styles.refillStat}>
+                  <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Fuel Added</Text>
+                  <Text style={[styles.refillValue, { color: colors.text }]}>{lastRefill.fuelAdded} L</Text>
+                </View>
+                <View style={styles.refillStat}>
+                  <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Cost</Text>
+                  <Text style={[styles.refillValue, { color: colors.primary }]}>₹{lastRefill.fuelCost.toFixed(2)}</Text>
+                </View>
+                <View style={styles.refillStat}>
+                  <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Odometer</Text>
+                  <Text style={[styles.refillValue, { color: colors.text }]}>{lastRefill.odometer.toLocaleString()} km</Text>
+                </View>
+                <View style={styles.refillStat}>
+                  <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Date</Text>
+                  <Text style={[styles.refillValue, { color: colors.text }]}>
+                    {new Date(lastRefill.date).toLocaleDateString()}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
+          </FadeInView>
         )}
 
         {rideStats && rideStats.totalRides > 0 && (
-          <View style={[styles.lastRefillCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Today's Rides</Text>
-            <View style={styles.lastRefillGrid}>
-              <View style={styles.refillStat}>
-                <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Distance</Text>
-                <Text style={[styles.refillValue, { color: colors.text }]}>{rideStats.todayDistance} km</Text>
-              </View>
-              <View style={styles.refillStat}>
-                <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Fuel Used</Text>
-                <Text style={[styles.refillValue, { color: colors.warning }]}>{rideStats.fuelConsumedToday} L</Text>
-              </View>
-              <View style={styles.refillStat}>
-                <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Week Distance</Text>
-                <Text style={[styles.refillValue, { color: colors.text }]}>{rideStats.weekDistance} km</Text>
-              </View>
-              <View style={styles.refillStat}>
-                <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Avg Daily</Text>
-                <Text style={[styles.refillValue, { color: colors.primary }]}>{rideStats.avgDailyUsage} km</Text>
+          <FadeInView index={8}>
+            <View style={[styles.lastRefillCard, { backgroundColor: colors.card, shadowColor: colors.cardShadow }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Today&apos;s Rides</Text>
+              <View style={styles.lastRefillGrid}>
+                <View style={styles.refillStat}>
+                  <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Distance</Text>
+                  <Text style={[styles.refillValue, { color: colors.text }]}>{rideStats.todayDistance} km</Text>
+                </View>
+                <View style={styles.refillStat}>
+                  <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Fuel Used</Text>
+                  <Text style={[styles.refillValue, { color: colors.warning }]}>{rideStats.fuelConsumedToday} L</Text>
+                </View>
+                <View style={styles.refillStat}>
+                  <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Week Distance</Text>
+                  <Text style={[styles.refillValue, { color: colors.text }]}>{rideStats.weekDistance} km</Text>
+                </View>
+                <View style={styles.refillStat}>
+                  <Text style={[styles.refillLabel, { color: colors.textMuted }]}>Avg Daily</Text>
+                  <Text style={[styles.refillValue, { color: colors.primary }]}>{rideStats.avgDailyUsage} km</Text>
+                </View>
               </View>
             </View>
-          </View>
+          </FadeInView>
         )}
 
         {!activeVehicle && (
@@ -226,18 +250,26 @@ export default function DashboardScreen() {
       </ScrollView>
 
       <View style={styles.fabRow}>
-        <Pressable
-          onPress={() => router.push('/log-ride')}
-          style={[styles.fabSmall, { backgroundColor: colors.success }]}
-        >
-          <Text style={styles.fabSmallText}>🛣️</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => router.push('/add-refill')}
-          style={[styles.fab, { backgroundColor: colors.primary }]}
-        >
-          <Text style={styles.fabText}>+</Text>
-        </Pressable>
+        <Animated.View style={fabSmallPressStyle}>
+          <Pressable
+            onPressIn={fabSmallPressIn}
+            onPressOut={fabSmallPressOut}
+            onPress={() => router.push('/log-ride')}
+            style={[styles.fabSmall, { backgroundColor: colors.success }]}
+          >
+            <Text style={styles.fabSmallText}>🛣️</Text>
+          </Pressable>
+        </Animated.View>
+        <Animated.View style={fabPressStyle}>
+          <Pressable
+            onPressIn={fabPressIn}
+            onPressOut={fabPressOut}
+            onPress={() => router.push('/add-refill')}
+            style={[styles.fab, { backgroundColor: colors.primary }]}
+          >
+            <Text style={styles.fabText}>+</Text>
+          </Pressable>
+        </Animated.View>
       </View>
     </View>
   );
@@ -246,6 +278,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingBottom: 4 },
+  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   greeting: { fontSize: 13, fontWeight: '500' },
   title: { fontSize: 28, fontWeight: '800', marginTop: 2 },
   scrollView: { flex: 1 },

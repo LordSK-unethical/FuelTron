@@ -1,11 +1,13 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import Animated from 'react-native-reanimated';
 import { useStore } from '../../src/store/useStore';
 import { FuelTrackTheme } from '../../src/store/theme';
 import { useTheme } from '../../src/hooks/useColorScheme';
 import { VehicleCard } from '../../src/components/VehicleCard';
 import { EmptyState } from '../../src/components/EmptyState';
+import { useEntranceAnimation, usePressAnimation } from '../../src/utils/animations';
 
 export default function VehiclesScreen() {
   const theme = useTheme();
@@ -16,14 +18,17 @@ export default function VehiclesScreen() {
   const setActiveVehicle = useStore((s) => s.setActiveVehicle);
   const deleteVehicle = useStore((s) => s.deleteVehicle);
 
+  const headerAnim = useEntranceAnimation(0, 40);
+  const { pressStyle: fabPressStyle, pressIn: fabPressIn, pressOut: fabPressOut } = usePressAnimation();
+
   return (
     <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
-      <View style={[styles.header, { paddingHorizontal: 16, paddingTop: 8 }]}>
+      <Animated.View style={[styles.header, { paddingHorizontal: 16, paddingTop: 8 }, headerAnim]}>
         <Text style={[styles.title, { color: colors.text }]}>My Vehicles</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           {vehicles.length} vehicle{vehicles.length !== 1 ? 's' : ''}
         </Text>
-      </View>
+      </Animated.View>
 
       {vehicles.length === 0 ? (
         <EmptyState
@@ -40,7 +45,7 @@ export default function VehiclesScreen() {
           contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
         >
-          {vehicles.map((vehicle) => (
+          {vehicles.map((vehicle, i) => (
             <Pressable
               key={vehicle.id}
               onLongPress={() => {
@@ -58,18 +63,23 @@ export default function VehiclesScreen() {
                   (router.push as (path: string) => void)(`/vehicle/${v.id}`);
                 }}
                 theme={theme}
+                index={i}
               />
             </Pressable>
           ))}
         </ScrollView>
       )}
 
-      <Pressable
-        onPress={() => router.push('/add-vehicle')}
-        style={[styles.fab, { backgroundColor: colors.primary }]}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </Pressable>
+      <Animated.View style={[fabPressStyle, styles.fabContainer]}>
+        <Pressable
+          onPressIn={fabPressIn}
+          onPressOut={fabPressOut}
+          onPress={() => router.push('/add-vehicle')}
+          style={[styles.fab, { backgroundColor: colors.primary }]}
+        >
+          <Text style={styles.fabText}>+</Text>
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }
@@ -80,10 +90,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800' },
   subtitle: { fontSize: 14, marginTop: 2 },
   scrollView: { flex: 1 },
-  fab: {
+  fabContainer: {
     position: 'absolute',
     bottom: 24,
     right: 20,
+  },
+  fab: {
     width: 56,
     height: 56,
     borderRadius: 28,

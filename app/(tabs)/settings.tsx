@@ -1,8 +1,12 @@
 import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated from 'react-native-reanimated';
 import { useStore } from '../../src/store/useStore';
 import { FuelTrackTheme } from '../../src/store/theme';
 import { useTheme } from '../../src/hooks/useColorScheme';
+import { FadeInView } from '../../src/components/FadeInView';
+import { AnimatedPressable } from '../../src/components/AnimatedPressable';
+import { useEntranceAnimation } from '../../src/utils/animations';
 import { exportToCSV, exportToPDF } from '../../src/utils/export';
 
 export default function SettingsScreen() {
@@ -45,86 +49,96 @@ export default function SettingsScreen() {
     loadSampleData();
   };
 
+  const headerAnim = useEntranceAnimation(0, 40);
+
   const SettingRow = ({ label, value, onPress, color }: { label: string; value?: string; onPress?: () => void; color?: string }) => (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
       disabled={!onPress}
-      style={({ pressed }) => [
+      style={[
         styles.settingRow,
-        { backgroundColor: colors.card, opacity: pressed && onPress ? 0.9 : 1 },
+        { backgroundColor: colors.card },
       ]}
     >
-      <Text style={[styles.settingLabel, { color: colors.text }]}>{label}</Text>
+      <Text style={[styles.settingLabel, { color: color || colors.text }]}>{label}</Text>
       <View style={styles.settingRight}>
         {value && <Text style={[styles.settingValue, { color: colors.textSecondary }]}>{value}</Text>}
         {onPress && <Text style={[styles.settingArrow, { color: colors.textMuted }]}>›</Text>}
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
-      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 }}>
+      <Animated.View style={[{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 }, headerAnim]}>
         <Text style={[styles.title, { color: colors.text }]}>Settings</Text>
-      </View>
+      </Animated.View>
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
-          <View style={styles.themeOptions}>
-            {(['light', 'dark', 'system'] as const).map((mode) => (
-              <Pressable
-                key={mode}
-                onPress={() => setTheme(mode)}
-                style={[
-                  styles.themeOption,
-                  {
-                    backgroundColor: storeTheme === mode ? colors.primary : colors.bgSecondary,
-                    borderColor: storeTheme === mode ? colors.primary : colors.border,
-                  },
-                ]}
-              >
-                <Text
+        <FadeInView index={0}>
+          <View style={[styles.section, { backgroundColor: colors.card }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
+            <View style={styles.themeOptions}>
+              {(['light', 'dark', 'system'] as const).map((mode) => (
+                <Pressable
+                  key={mode}
+                  onPress={() => setTheme(mode)}
                   style={[
-                    styles.themeOptionText,
-                    { color: storeTheme === mode ? '#FFFFFF' : colors.text },
+                    styles.themeOption,
+                    {
+                      backgroundColor: storeTheme === mode ? colors.primary : colors.bgSecondary,
+                      borderColor: storeTheme === mode ? colors.primary : colors.border,
+                    },
                   ]}
                 >
-                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                </Text>
-              </Pressable>
-            ))}
+                  <Text
+                    style={[
+                      styles.themeOptionText,
+                      { color: storeTheme === mode ? '#FFFFFF' : colors.text },
+                    ]}
+                  >
+                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
-        </View>
+        </FadeInView>
 
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Statistics</Text>
-          <View style={styles.statRow}>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Vehicles</Text>
-            <Text style={[styles.statValue, { color: colors.text }]}>{totalVehicles}</Text>
+        <FadeInView index={1}>
+          <View style={[styles.section, { backgroundColor: colors.card }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Statistics</Text>
+            <View style={styles.statRow}>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Vehicles</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{totalVehicles}</Text>
+            </View>
+            <View style={[styles.statRow, { borderTopWidth: 0 }]}>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Refills Logged</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{totalRefills}</Text>
+            </View>
           </View>
-          <View style={[styles.statRow, { borderTopWidth: 0 }]}>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Refills Logged</Text>
-            <Text style={[styles.statValue, { color: colors.text }]}>{totalRefills}</Text>
+        </FadeInView>
+
+        <FadeInView index={2}>
+          <View style={[styles.section, { backgroundColor: colors.card }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Actions</Text>
+            <SettingRow label="Export to CSV" value="Share refill data" onPress={handleExportCSV} />
+            <SettingRow label="Export to PDF" value="Share PDF report" onPress={handleExportPDF} />
+            <SettingRow label="Reset All Data" value="Delete everything" onPress={handleReset} color={colors.danger} />
           </View>
-        </View>
+        </FadeInView>
 
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Actions</Text>
-          <SettingRow label="Export to CSV" value="Share refill data" onPress={handleExportCSV} />
-          <SettingRow label="Export to PDF" value="Share PDF report" onPress={handleExportPDF} />
-          <SettingRow label="Reset All Data" value="Delete everything" onPress={handleReset} color={colors.danger} />
-        </View>
-
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
-          <SettingRow label="App" value="FuelTron v1.0.0" />
-          <SettingRow label="Made By" value="Soham Kedari" />
-        </View>
+        <FadeInView index={3}>
+          <View style={[styles.section, { backgroundColor: colors.card }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
+            <SettingRow label="App" value="FuelTron v1.0.0" />
+            <SettingRow label="Made By" value="Soham Kedari" />
+          </View>
+        </FadeInView>
       </ScrollView>
     </View>
   );

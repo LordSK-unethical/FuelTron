@@ -2,13 +2,14 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { BarChart } from 'react-native-chart-kit';
 import { MonthlyExpense } from '../types';
 import { FuelTrackTheme } from '../store/theme';
+import { FadeInView } from '../components/FadeInView';
 
 interface Props { data: MonthlyExpense[]; theme: 'light' | 'dark'; }
 
 export function FuelCostChart({ data, theme }: Props) {
   const c = FuelTrackTheme[theme];
   const w = Dimensions.get('window').width - 32;
-  if (data.length === 0) return <View style={[s.empty, { backgroundColor: c.card }]}><Text style={[s.emptyText, { color: c.textMuted }]}>No monthly data yet</Text></View>;
+  if (data.length === 0) return <FadeInView><View style={[s.empty, { backgroundColor: c.card }]}><Text style={[s.emptyText, { color: c.textMuted }]}>No monthly data yet</Text></View></FadeInView>;
 
   const recent = data.slice(-6);
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -16,15 +17,17 @@ export function FuelCostChart({ data, theme }: Props) {
   const costs = recent.map((d) => d.totalCost);
 
   return (
-    <View style={[s.card, { backgroundColor: c.card }]}>
-      <Text style={[s.title, { color: c.text }]}>Monthly Fuel Cost</Text>
-      <BarChart data={{ labels, datasets: [{ data: costs.length > 0 ? costs : [0] }] }} width={w - 32} height={180}
-        yAxisSuffix="" yAxisLabel="₹" chartConfig={{
-          backgroundColor: c.card, backgroundGradientFrom: c.card, backgroundGradientTo: c.card,
-          decimalPlaces: 0, color: () => c.primary, labelColor: () => c.textSecondary, barPercentage: 0.6,
-          propsForBackgroundLines: { strokeDasharray: '', stroke: c.border, strokeWidth: 0.5 },
-        }} style={s.chart} fromZero />
-    </View>
+    <FadeInView>
+      <View style={[s.card, { backgroundColor: c.card }]}>
+        <Text style={[s.title, { color: c.text }]}>Monthly Fuel Cost</Text>
+        <BarChart data={{ labels, datasets: [{ data: costs.length > 0 ? costs : [0] }] }} width={w - 32} height={180}
+          yAxisSuffix="" yAxisLabel="₹" chartConfig={{
+            backgroundColor: c.card, backgroundGradientFrom: c.card, backgroundGradientTo: c.card,
+            decimalPlaces: 0, color: () => c.primary, labelColor: () => c.textSecondary, barPercentage: 0.6,
+            propsForBackgroundLines: { strokeDasharray: '', stroke: c.border, strokeWidth: 0.5 },
+          }} style={s.chart} fromZero />
+      </View>
+    </FadeInView>
   );
 }
 

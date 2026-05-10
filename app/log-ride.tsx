@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import Animated from 'react-native-reanimated';
 import { useStore } from '../src/store/useStore';
 import { FuelTrackTheme } from '../src/store/theme';
 import { useTheme } from '../src/hooks/useColorScheme';
+import { FadeInView } from '../src/components/FadeInView';
+import { useEntranceAnimation } from '../src/utils/animations';
 import { Ride, RideType } from '../src/types';
 import { getLastOdometer, validateRide, calculateRideDistance, calculateFuelUsed, calculateRemainingRangeAfterRide, predictNextRefill } from '../src/utils/calculations';
 
@@ -31,6 +34,8 @@ export default function LogRideScreen() {
   const [rideType, setRideType] = useState<RideType>('City');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  const headerAnim = useEntranceAnimation(0, 30);
 
   const odoNum = parseFloat(currentOdometer) || 0;
   const distance = odoNum > 0 && lastOdometer > 0 ? calculateRideDistance(lastOdometer, odoNum) : 0;
@@ -67,13 +72,13 @@ export default function LogRideScreen() {
   if (!activeVehicle) {
     return (
       <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, headerAnim]}>
           <Pressable onPress={() => router.back()}>
             <Text style={[styles.backText, { color: colors.primary }]}>Cancel</Text>
           </Pressable>
           <Text style={[styles.headerTitle, { color: colors.text }]}>No Vehicle Selected</Text>
           <View style={{ width: 50 }} />
-        </View>
+        </Animated.View>
       </View>
     );
   }
@@ -83,7 +88,7 @@ export default function LogRideScreen() {
       style={[styles.container, { backgroundColor: colors.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <Animated.View style={[styles.header, { paddingTop: insets.top }, headerAnim]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Text style={[styles.backText, { color: colors.primary }]}>Cancel</Text>
         </Pressable>
@@ -98,101 +103,113 @@ export default function LogRideScreen() {
             Save
           </Text>
         </Pressable>
-      </View>
+      </Animated.View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
-        <View style={[styles.vehicleInfo, { backgroundColor: colors.card }]}>
-          <Text style={[styles.vehicleName, { color: colors.text }]}>{activeVehicle.name}</Text>
-          <Text style={[styles.vehicleDetail, { color: colors.textSecondary }]}>
-            {activeVehicle.number} &middot; ~{currentKmpl.toFixed(1)} kmpl
-          </Text>
-        </View>
+        <FadeInView index={0}>
+          <View style={[styles.vehicleInfo, { backgroundColor: colors.card }]}>
+            <Text style={[styles.vehicleName, { color: colors.text }]}>{activeVehicle.name}</Text>
+            <Text style={[styles.vehicleDetail, { color: colors.textSecondary }]}>
+              {activeVehicle.number} &middot; ~{currentKmpl.toFixed(1)} kmpl
+            </Text>
+          </View>
+        </FadeInView>
 
         {error && (
-          <View style={[styles.errorBanner, { backgroundColor: colors.danger + '15', borderColor: colors.danger + '30' }]}>
-            <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
-          </View>
+          <FadeInView index={1}>
+            <View style={[styles.errorBanner, { backgroundColor: colors.danger + '15', borderColor: colors.danger + '30' }]}>
+              <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
+            </View>
+          </FadeInView>
         )}
 
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Current Odometer (km)</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
-            placeholder="e.g. 15250"
-            placeholderTextColor={colors.textMuted}
-            value={currentOdometer}
-            onChangeText={setCurrentOdometer}
-            keyboardType="decimal-pad"
-          />
-          {lastOdometer > 0 && (
-            <Text style={[styles.hint, { color: colors.textMuted }]}>
-              Previous odometer: {lastOdometer} km
-            </Text>
-          )}
-        </View>
-
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Ride Type</Text>
-          <View style={styles.toggleRow}>
-            {RIDE_TYPES.map((type) => (
-              <Pressable
-                key={type}
-                onPress={() => setRideType(type)}
-                style={[
-                  styles.toggleOption,
-                  {
-                    backgroundColor: rideType === type ? colors.primary : colors.bgSecondary,
-                    borderColor: rideType === type ? colors.primary : colors.border,
-                  },
-                ]}
-              >
-                <Text style={[styles.toggleText, { color: rideType === type ? '#FFFFFF' : colors.text }]}>
-                  {type}
-                </Text>
-              </Pressable>
-            ))}
+        <FadeInView index={1}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Current Odometer (km)</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
+              placeholder="e.g. 15250"
+              placeholderTextColor={colors.textMuted}
+              value={currentOdometer}
+              onChangeText={setCurrentOdometer}
+              keyboardType="decimal-pad"
+            />
+            {lastOdometer > 0 && (
+              <Text style={[styles.hint, { color: colors.textMuted }]}>
+                Previous odometer: {lastOdometer} km
+              </Text>
+            )}
           </View>
-        </View>
+        </FadeInView>
 
-        {distance > 0 && (
-          <View style={[styles.preview, { backgroundColor: colors.card }]}>
-            <Text style={[styles.previewTitle, { color: colors.text }]}>Ride Preview</Text>
-            <View style={styles.previewGrid}>
-              <View style={styles.previewItem}>
-                <Text style={[styles.previewLabel, { color: colors.textMuted }]}>Distance</Text>
-                <Text style={[styles.previewValue, { color: colors.text }]}>{distance} km</Text>
-              </View>
-              <View style={styles.previewItem}>
-                <Text style={[styles.previewLabel, { color: colors.textMuted }]}>Fuel Used</Text>
-                <Text style={[styles.previewValue, { color: colors.warning }]}>{fuelUsed} L</Text>
-              </View>
-              <View style={styles.previewItem}>
-                <Text style={[styles.previewLabel, { color: colors.textMuted }]}>Range Left</Text>
-                <Text style={[styles.previewValue, { color: colors.primary }]}>{remainingRange} km</Text>
-              </View>
-              <View style={styles.previewItem}>
-                <Text style={[styles.previewLabel, { color: colors.textMuted }]}>Efficiency</Text>
-                <Text style={[styles.previewValue, { color: colors.success }]}>
-                  {distance > 0 && fuelUsed > 0 ? `${(distance / fuelUsed).toFixed(1)} kmpl` : '-'}
-                </Text>
-              </View>
+        <FadeInView index={2}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Ride Type</Text>
+            <View style={styles.toggleRow}>
+              {RIDE_TYPES.map((type) => (
+                <Pressable
+                  key={type}
+                  onPress={() => setRideType(type)}
+                  style={[
+                    styles.toggleOption,
+                    {
+                      backgroundColor: rideType === type ? colors.primary : colors.bgSecondary,
+                      borderColor: rideType === type ? colors.primary : colors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.toggleText, { color: rideType === type ? '#FFFFFF' : colors.text }]}>
+                    {type}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
           </View>
+        </FadeInView>
+
+        {distance > 0 && (
+          <FadeInView index={3}>
+            <View style={[styles.preview, { backgroundColor: colors.card }]}>
+              <Text style={[styles.previewTitle, { color: colors.text }]}>Ride Preview</Text>
+              <View style={styles.previewGrid}>
+                <View style={styles.previewItem}>
+                  <Text style={[styles.previewLabel, { color: colors.textMuted }]}>Distance</Text>
+                  <Text style={[styles.previewValue, { color: colors.text }]}>{distance} km</Text>
+                </View>
+                <View style={styles.previewItem}>
+                  <Text style={[styles.previewLabel, { color: colors.textMuted }]}>Fuel Used</Text>
+                  <Text style={[styles.previewValue, { color: colors.warning }]}>{fuelUsed} L</Text>
+                </View>
+                <View style={styles.previewItem}>
+                  <Text style={[styles.previewLabel, { color: colors.textMuted }]}>Range Left</Text>
+                  <Text style={[styles.previewValue, { color: colors.primary }]}>{remainingRange} km</Text>
+                </View>
+                <View style={styles.previewItem}>
+                  <Text style={[styles.previewLabel, { color: colors.textMuted }]}>Efficiency</Text>
+                  <Text style={[styles.previewValue, { color: colors.success }]}>
+                    {distance > 0 && fuelUsed > 0 ? `${(distance / fuelUsed).toFixed(1)} kmpl` : '-'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </FadeInView>
         )}
 
-        <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Notes (Optional)</Text>
-          <TextInput
-            style={[styles.textArea, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
-            placeholder="Traffic, route, weather, etc..."
-            placeholderTextColor={colors.textMuted}
-            value={notes}
-            onChangeText={setNotes}
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-          />
-        </View>
+        <FadeInView index={4}>
+          <View style={[styles.fieldGroup, { backgroundColor: colors.card }]}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Notes (Optional)</Text>
+            <TextInput
+              style={[styles.textArea, { backgroundColor: colors.bgSecondary, color: colors.text, borderColor: colors.border }]}
+              placeholder="Traffic, route, weather, etc..."
+              placeholderTextColor={colors.textMuted}
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+          </View>
+        </FadeInView>
       </ScrollView>
     </KeyboardAvoidingView>
   );

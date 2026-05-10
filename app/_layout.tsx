@@ -3,6 +3,7 @@ import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useStore } from '../src/store/useStore';
 import { useTheme } from '../src/hooks/useColorScheme';
 import { FuelTrackTheme } from '../src/store/theme';
@@ -32,15 +33,18 @@ export default function RootLayout() {
 
   if (!initialized || loading) {
     return (
-      <SafeAreaProvider>
-        <LoadingScreen />
-        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-      </SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <LoadingScreen />
+          <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     );
   }
 
   return (
-    <SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
@@ -64,6 +68,7 @@ export default function RootLayout() {
       </Stack>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
     </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
