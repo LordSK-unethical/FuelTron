@@ -1,4 +1,3 @@
-import { Platform } from 'react-native';
 import { Vehicle, Refill } from '../types';
 import { computeRefillData } from './calculations';
 import { File, Paths } from 'expo-file-system';

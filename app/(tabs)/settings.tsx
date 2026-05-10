@@ -117,14 +117,13 @@ export default function SettingsScreen() {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Actions</Text>
           <SettingRow label="Export to CSV" value="Share refill data" onPress={handleExportCSV} />
           <SettingRow label="Export to PDF" value="Share PDF report" onPress={handleExportPDF} />
-          <SettingRow label="Load Sample Data" value="Demo vehicles & refills" onPress={handleLoadSample} />
           <SettingRow label="Reset All Data" value="Delete everything" onPress={handleReset} color={colors.danger} />
         </View>
 
         <View style={[styles.section, { backgroundColor: colors.card }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
           <SettingRow label="App" value="FuelTron v1.0.0" />
-          <SettingRow label="Made with" value="React Native + Expo" />
+          <SettingRow label="Made By" value="Soham Kedari" />
         </View>
       </ScrollView>
     </View>
